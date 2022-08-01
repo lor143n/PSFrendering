@@ -52,7 +52,7 @@ def save_exr(img, outpath):
   exr.close()
 
 #creazione della matrice gaussiana
-https://stackoverflow.com/questions/29731726/how-to-calculate-a-gaussian-kernel-matrix-efficiently-in-numpy
+#https://stackoverflow.com/questions/29731726/how-to-calculate-a-gaussian-kernel-matrix-efficiently-in-numpy
 def gaussian_kernel(size=21, std=3):
     '''Returns a 2D Gaussian kernel array.'''
     kernel1d = signal.windows.gaussian(size, std=std)
