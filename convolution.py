@@ -1,3 +1,4 @@
+from cmath import exp, pi, sqrt
 import numpy as np
 import OpenEXR
 import os
@@ -34,24 +35,47 @@ def save_srgb(rgb, outpath):
                   (1 + 0.055) * np.power(rgb, 1 / 2.4) - 0.055)
   srgb = np.clip(srgb * 255, 0, 255).astype(np.uint8)
   Image.fromarray(srgb).save(outpath)
-  
-  
-def gaussian_kernel(size=21, std=3):
+
+
+def gaussian_kernel(size, std=3):
     '''Returns a 2D Gaussian kernel array.'''
     kernel1d = signal.windows.gaussian(size, std=std)
     kernel2d = np.outer(kernel1d, kernel1d)
     return kernel2d / np.sum(kernel2d)
-            
 
-@njit(parallel=True)
-def convolution(rgb, depth, krnl):
+
+def kernel_db(db_size):
+    disp_index = 1
+    db = []
+    for i in range(db_size):
+        db.append((disp_index, gaussian_kernel(disp_index)))
+        disp_index = disp_index + 2
+        
+    return db
+        
+        
+            
+@njit(parallel = True)
+def convolution(rgb, depth, krnls_db, st_pl_depth):
     rgb_new = rgb
     for i in prange(len(rgb)):
         for j in prange(len(rgb[i])):
-            rgb_new[i][j] = [0,0,0]
-            krnl_size = 21; #kernel dispari
-            krnl_range = int((krnl_size - 1) / 2)
             
+            
+            rgb_new[i][j] = [0,0,0] 
+    
+            if int(depth[i][j]) < len(krnls_db):
+                krnl_size = krnls_db[int(depth[i][j])][0]
+                krnl = krnls_db[int(depth[i][j])][1]
+            else:
+                krnl_size = krnls_db[len(krnls_db)-1][0]
+                krnl = krnls_db[len(krnls_db)-1][1]
+                
+            if int(depth[i][j]) <= st_pl_depth:
+                continue
+            
+            
+            krnl_range = int((krnl_size - 1) / 2)
             krnl_i = 0
             for k in prange(i-krnl_range, i+krnl_range+1):
                 
@@ -69,7 +93,6 @@ def convolution(rgb, depth, krnl):
                     rgb_new[i][j] += rgb[k][h] * krnl[krnl_i][krnl_j]
                     krnl_j += 1
                 krnl_i += 1
-            #rgb_new[i][j] = (rgb_new/(krnl_size*krnl_size))*krnl_range
                     
     return rgb_new
     
@@ -77,10 +100,13 @@ def convolution(rgb, depth, krnl):
 def main_convolution():
 
     (rgb, depth) = load_rgbd('TestImages/Scena Davide/rgbd.exr')
-    kernel = gaussian_kernel()
 
+    kernel = gaussian_kernel(5)
     start_time = time.time()
-    rgb = convolution(rgb, depth, kernel)
+    krnl_db = kernel_db(10)
+    start_plane_depth = 2
+    
+    rgb = convolution(rgb, depth, krnl_db, start_plane_depth)
     end_time = time.time()
     
     save_srgb(rgb, 'ResImages/final.png')
