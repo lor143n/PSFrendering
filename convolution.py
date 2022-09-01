@@ -1,4 +1,5 @@
 from cmath import exp, pi, sqrt
+import math
 import numpy as np
 import OpenEXR
 import os
@@ -44,14 +45,35 @@ def gaussian_kernel(size, std):
     return kernel2d / np.sum(kernel2d)
 
 
-def kernel_db(db_size):
+def kernel_db_std(db_size):
     db = []
     for i in range(db_size):
-        if i == 0:
-            k = 0.000001
-        else:      
-            k = i/10
-        db.append(gaussian_kernel(7,k))
+        # [0,999] db.append(gaussian_kernel(7,i))
+        # [0.0,99.9] db.append(gaussian_kernel(7,i/10))
+        # [0.00,9.99] db.append(gaussian_kernel(7,i/100))
+        # [1.00, 10.99] db.append(gaussian_kernel(7,i/100 + 1))
+        # [0.1, 100.0] db.append(gaussian_kernel(7,i/10 + 0.1))
+        db.append(gaussian_kernel(7,i/10 + 0.5))
+        
+    return db
+
+def kernel_db_size(db_size):
+    db = []
+    disp_i = 1
+    for i in range(db_size):
+        db.append(gaussian_kernel(disp_i,1))
+        disp_i = disp_i + 2
+        
+    return db
+
+def kernel_db_size_std(db_size):
+    db = []
+    disp_i = 1
+    for i in range(db_size):
+        # [0.0,99.9] db.append(gaussian_kernel(disp_i,i/10))
+        # [0,999] db.append(gaussian_kernel(disp_i,i))
+        db.append(gaussian_kernel(disp_i, math.e**(i/5)))
+        disp_i = disp_i + 2
         
     return db
         
@@ -66,15 +88,18 @@ def convolution(rgb, depth, krnls_db, st_pl_depth):
             
             rgb_new[i][j] = (0,0,0) #utilizzo tupla
             krnl_size = 7
-            if int(depth[i][j]*10) < len(krnls_db):
-                krnl = krnls_db[int(depth[i][j])*10]
+            
+            if int(depth[i][j]) < len(krnls_db):
+                krnl = krnls_db[int(depth[i][j])]
             else:
                 krnl = krnls_db[len(krnls_db)-1]
-                
+            
+            '''                
             if int(depth[i][j]) <= st_pl_depth:
                 continue
+            '''
+            krnl_size = len(krnl)
             
-
             krnl_range = int((krnl_size - 1) / 2)
             krnl_i = 0
             for k in prange(i-krnl_range, i+krnl_range+1):
@@ -99,19 +124,29 @@ def convolution(rgb, depth, krnls_db, st_pl_depth):
     
 def main_convolution():
 
-    (rgb, depth) = load_rgbd('TestImages/Scena Davide/rgbd.exr')
-
+    (rgb, depth) = load_rgbd('TestImages/checker.exr')
+    '''
+    for i in range(len(depth)):
+        for j in range(len(depth[0])):
+            print(depth[i][j])
+    '''
     start_time = time.time()
-    krnl_db = kernel_db(1000)
-    end_time = time.time()
-    print("Convolution time is: ", str(end_time-start_time)+"s")
-    start_plane_depth = 2
     
+    krnl_db = kernel_db_std(1000)
+    #krnl_db = kernel_db_size(20)
+    #krnl_db = kernel_db_size_std(10)
+    
+    end_time = time.time()
+    print("Database construction time is: ", str(end_time-start_time)+"s")
+    
+    start_plane_depth = 2 
     rgb = convolution(rgb, depth, krnl_db, start_plane_depth)
-    end_time = time.time()
     
-    save_srgb(rgb, 'ResImages/finalSTD7.png')
+    end_time = time.time()
     print("Convolution time is: ", str(end_time-start_time)+"s")
+    
+    save_srgb(rgb, 'ResImages/checkerSTD[std 0.5 to 100.4].png')
+    
     
 
 if __name__=='__main__':
