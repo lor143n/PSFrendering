@@ -37,7 +37,7 @@ def save_srgb(rgb, outpath):
   Image.fromarray(srgb).save(outpath)
 
 
-def gaussian_kernel(size, std=3):
+def gaussian_kernel(size, std):
     '''Returns a 2D Gaussian kernel array.'''
     kernel1d = signal.windows.gaussian(size, std=std)
     kernel2d = np.outer(kernel1d, kernel1d)
@@ -45,11 +45,13 @@ def gaussian_kernel(size, std=3):
 
 
 def kernel_db(db_size):
-    disp_index = 1
     db = []
     for i in range(db_size):
-        db.append((disp_index, gaussian_kernel(disp_index)))
-        disp_index = disp_index + 2
+        if i == 0:
+            k = 0.000001
+        else:      
+            k = i/10
+        db.append(gaussian_kernel(7,k))
         
     return db
         
@@ -62,19 +64,17 @@ def convolution(rgb, depth, krnls_db, st_pl_depth):
         for j in prange(len(rgb[i])):
             
             
-            rgb_new[i][j] = [0,0,0] 
-    
-            if int(depth[i][j]) < len(krnls_db):
-                krnl_size = krnls_db[int(depth[i][j])][0]
-                krnl = krnls_db[int(depth[i][j])][1]
+            rgb_new[i][j] = (0,0,0) #utilizzo tupla
+            krnl_size = 7
+            if int(depth[i][j]*10) < len(krnls_db):
+                krnl = krnls_db[int(depth[i][j])*10]
             else:
-                krnl_size = krnls_db[len(krnls_db)-1][0]
-                krnl = krnls_db[len(krnls_db)-1][1]
+                krnl = krnls_db[len(krnls_db)-1]
                 
             if int(depth[i][j]) <= st_pl_depth:
                 continue
             
-            
+
             krnl_range = int((krnl_size - 1) / 2)
             krnl_i = 0
             for k in prange(i-krnl_range, i+krnl_range+1):
@@ -101,15 +101,16 @@ def main_convolution():
 
     (rgb, depth) = load_rgbd('TestImages/Scena Davide/rgbd.exr')
 
-    kernel = gaussian_kernel(5)
     start_time = time.time()
-    krnl_db = kernel_db(10)
+    krnl_db = kernel_db(1000)
+    end_time = time.time()
+    print("Convolution time is: ", str(end_time-start_time)+"s")
     start_plane_depth = 2
     
     rgb = convolution(rgb, depth, krnl_db, start_plane_depth)
     end_time = time.time()
     
-    save_srgb(rgb, 'ResImages/final.png')
+    save_srgb(rgb, 'ResImages/finalSTD7.png')
     print("Convolution time is: ", str(end_time-start_time)+"s")
     
 
