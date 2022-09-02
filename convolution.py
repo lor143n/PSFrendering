@@ -53,8 +53,8 @@ def kernel_db_std(db_size):
         # [0.00,9.99] db.append(gaussian_kernel(7,i/100))
         # [1.00, 10.99] db.append(gaussian_kernel(7,i/100 + 1))
         # [0.1, 100.0] db.append(gaussian_kernel(7,i/10 + 0.1))
-        db.append(gaussian_kernel(7,i/10 + 0.5))
-        
+        db.append(gaussian_kernel(17,i/10 + 0.5))
+    tuple(map(tuple, db))
     return db
 
 def kernel_db_size(db_size):
@@ -79,15 +79,15 @@ def kernel_db_size_std(db_size):
         
         
             
-@njit(parallel = True)
+@njit()
 def convolution(rgb, depth, krnls_db, st_pl_depth):
     rgb_new = rgb
-    for i in prange(len(rgb)):
-        for j in prange(len(rgb[i])):
+    for i in range(len(rgb)):
+        for j in range(len(rgb[0])):
             
             
-            rgb_new[i][j] = (0,0,0) #utilizzo tupla
-            krnl_size = 7
+            rgb_new[i][j] = (0,0,0)
+            krnl_size = 15
             
             if int(depth[i][j]) < len(krnls_db):
                 krnl = krnls_db[int(depth[i][j])]
@@ -101,35 +101,36 @@ def convolution(rgb, depth, krnls_db, st_pl_depth):
             krnl_size = len(krnl)
             
             krnl_range = int((krnl_size - 1) / 2)
+            
             krnl_i = 0
-            for k in prange(i-krnl_range, i+krnl_range+1):
-                
-                if k < 0 or k >= len(rgb):
-                    krnl_i += 1
-                    continue
+            for k in range(i-krnl_range, i+krnl_range+1):
                 
                 krnl_j = 0
-                for h in prange(j-krnl_range, j+krnl_range+1):
+                for h in range(j-krnl_range, j+krnl_range+1):
                     
-                    if h < 0 or h >= len(rgb[i]):
+                    
+                    if h < 0 or h >= len(rgb[0]):
                         krnl_j += 1
                         continue
+                    
+                    
+                    if k < 0 or k >= len(rgb):
+                        krnl_j += 1
+                        continue
+                    
                     
                     rgb_new[i][j] += rgb[k][h] * krnl[krnl_i][krnl_j]
                     krnl_j += 1
                 krnl_i += 1
+            
                     
     return rgb_new
     
     
 def main_convolution():
 
-    (rgb, depth) = load_rgbd('TestImages/checker.exr')
-    '''
-    for i in range(len(depth)):
-        for j in range(len(depth[0])):
-            print(depth[i][j])
-    '''
+    (rgb, depth) = load_rgbd('TestImages/Scena Davide/rgbd.exr')
+    
     start_time = time.time()
     
     krnl_db = kernel_db_std(1000)
@@ -145,8 +146,7 @@ def main_convolution():
     end_time = time.time()
     print("Convolution time is: ", str(end_time-start_time)+"s")
     
-    save_srgb(rgb, 'ResImages/checkerSTD[std 0.5 to 100.4].png')
-    
+    save_srgb(rgb, 'ResImages/finalSTDcheck(std 0.5 to 100.4)noparallel.png')
     
 
 if __name__=='__main__':
