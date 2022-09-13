@@ -42,7 +42,7 @@ def gaussian_kernel(size, std):
     '''Returns a 2D Gaussian kernel array.'''
     kernel1d = signal.windows.gaussian(size, std=std)
     kernel2d = np.outer(kernel1d, kernel1d)
-    return kernel2d / np.sum(kernel2d)
+    return kernel2d / np.sum(kernel2d)#*(size*size)
 
 
 def kernel_db_std(db_size):
@@ -53,7 +53,8 @@ def kernel_db_std(db_size):
         # [0.00,9.99] db.append(gaussian_kernel(7,i/100))
         # [1.00, 10.99] db.append(gaussian_kernel(7,i/100 + 1))
         # [0.1, 100.0] db.append(gaussian_kernel(7,i/10 + 0.1))
-        db.append(gaussian_kernel(17,i/10 + 0.5))
+        #db.append(gaussian_kernel(17,i/10 + 0.5))
+        db.append(gaussian_kernel(7,i/10 + 1))
     tuple(map(tuple, db))
     return db
 
@@ -80,24 +81,22 @@ def kernel_db_size_std(db_size):
         
             
 @njit()
-def convolution(rgb, depth, krnls_db, st_pl_depth):
+def convolution(rgb, depth, krnls_db, focus):
     rgb_new = rgb
     for i in range(len(rgb)):
         for j in range(len(rgb[0])):
             
-            
             rgb_new[i][j] = (0,0,0)
-            krnl_size = 15
             
-            if int(depth[i][j]) < len(krnls_db):
-                krnl = krnls_db[int(depth[i][j])]
+            krnl_depth = abs(depth[i][j] - focus)
+            krnl_depth = round(krnl_depth)
+            
+        
+            if krnl_depth**2 < len(krnls_db):
+                krnl = krnls_db[krnl_depth**2]
             else:
                 krnl = krnls_db[len(krnls_db)-1]
             
-            '''                
-            if int(depth[i][j]) <= st_pl_depth:
-                continue
-            '''
             krnl_size = len(krnl)
             
             krnl_range = int((krnl_size - 1) / 2)
@@ -129,10 +128,13 @@ def convolution(rgb, depth, krnls_db, st_pl_depth):
     
 def main_convolution():
 
+
+    #Caricamento dell'immagine exr
     (rgb, depth) = load_rgbd('TestImages/Scena Davide/rgbd.exr')
     
     start_time = time.time()
     
+    #Creazione del database di kernel
     krnl_db = kernel_db_std(1000)
     #krnl_db = kernel_db_size(20)
     #krnl_db = kernel_db_size_std(10)
@@ -140,13 +142,14 @@ def main_convolution():
     end_time = time.time()
     print("Database construction time is: ", str(end_time-start_time)+"s")
     
-    start_plane_depth = 2 
-    rgb = convolution(rgb, depth, krnl_db, start_plane_depth)
+    #Convoluzione
+    rgb = convolution(rgb, depth, krnl_db, 11)
     
     end_time = time.time()
     print("Convolution time is: ", str(end_time-start_time)+"s")
     
-    save_srgb(rgb, 'ResImages/finalSTDcheck(std 0.5 to 100.4)noparallel.png')
+    #Salvataggio dell'immagine
+    save_srgb(rgb, 'ResImages/finalSTD(1-100 - 7).png')
     
 
 if __name__=='__main__':
