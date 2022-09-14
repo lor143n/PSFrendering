@@ -126,7 +126,8 @@ def main_convolution():
 
 
     #Caricamento dell'immagine exr
-    (rgb, depth) = load_rgbd('TestImages/Scena Davide/rgbd.exr')
+    #(rgb, depth) = load_rgbd('TestImages/Scena Davide/rgbd.exr')
+    (rgb, depth) = load_rgbd('TestImages/pebble_scattering_2.exr')
     
     start_time = time.time()
     
@@ -139,14 +140,13 @@ def main_convolution():
     print("Database construction time is: ", str(end_time-start_time)+"s")
     
     #Convoluzione
-    print(krnl_db[999])
-    rgb = convolution(rgb, depth, krnl_db, len(krnl_db[0]), 11)
+    rgb = convolution(rgb, depth, krnl_db, len(krnl_db[0]), 5)
     
     end_time = time.time()
     print("Convolution time is: ", str(end_time-start_time)+"s")
     
     #Salvataggio dell'immagine
-    save_srgb(rgb, 'ResImages/resGAUSS(17 - 0.1_100)[88]norm.png')
+    save_srgb(rgb, 'ResImages/pebble2GAUSS(7 - 0.1_100)[7]f[5].png')
     
 
 if __name__=='__main__':
