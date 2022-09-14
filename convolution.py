@@ -1,4 +1,5 @@
 from cmath import exp, pi, sqrt
+from ctypes import sizeof
 import math
 import numpy as np
 import OpenEXR
@@ -36,25 +37,39 @@ def save_srgb(rgb, outpath):
                   (1 + 0.055) * np.power(rgb, 1 / 2.4) - 0.055)
   srgb = np.clip(srgb * 255, 0, 255).astype(np.uint8)
   Image.fromarray(srgb).save(outpath)
+  
+  
+def save_exr(img, outpath):
+  r, g, b = img
+  height, width = img.shape
+  header = OpenEXR.Header(width, height)
+
+  exr = OpenEXR.OutputFile(outpath, header)
+  exr.writePixels({'R': r.tobytes(),
+                   'G': g.tobytes(),
+                   'B': b.tobytes()})
+  exr.close()
 
 
 def gaussian_kernel(size, std):
+    
     '''Returns a 2D Gaussian kernel array.'''
     kernel1d = signal.windows.gaussian(size, std=std)
     kernel2d = np.outer(kernel1d, kernel1d)
-    return kernel2d / np.sum(kernel2d)#*(size*size)
+    return kernel2d / np.sum(kernel2d)
 
 
-def kernel_db_std(db_size):
+
+def kernel_db_std(db_size, k_size):
     db = []
     for i in range(db_size):
-        # [0,999] db.append(gaussian_kernel(7,i))
-        # [0.0,99.9] db.append(gaussian_kernel(7,i/10))
-        # [0.00,9.99] db.append(gaussian_kernel(7,i/100))
-        # [1.00, 10.99] db.append(gaussian_kernel(7,i/100 + 1))
-        # [0.1, 100.0] db.append(gaussian_kernel(7,i/10 + 0.1))
-        #db.append(gaussian_kernel(17,i/10 + 0.5))
-        db.append(gaussian_kernel(7,i/10 + 1))
+        # [0,999] db.append(gaussian_kernel(k_size,i))
+        # [0.0,99.9] db.append(gaussian_kernel(k_size,i/10))
+        # [0.00,9.99] db.append(gaussian_kernel(k_size,i/100))
+        # [1.00, 10.99] db.append(gaussian_kernel(k_size,i/100 + 1))
+        # [0.1, 100.0] db.append(gaussian_kernel(k_size,i/10 + 0.1))
+        db.append(gaussian_kernel(k_size,i/10 + 0.1))
+        #db.append(gaussian_kernel(k_size,i/10 + 1))
     tuple(map(tuple, db))
     return db
 
@@ -81,46 +96,27 @@ def kernel_db_size_std(db_size):
         
             
 @njit()
-def convolution(rgb, depth, krnls_db, focus):
-    rgb_new = rgb
-    for i in range(len(rgb)):
-        for j in range(len(rgb[0])):
+def convolution(rgb, depth, krnls_db, krnl_size, focus):
+    rgb_new = rgb*0
+    
+    krnl_range = int((krnl_size - 1) / 2)
+    image_width = len(rgb)
+    image_height = len(rgb[0])
+    
+    for i in range(krnl_range, image_width - krnl_range):
+        for j in range(krnl_range, image_height - krnl_range):
             
-            rgb_new[i][j] = (0,0,0)
+            krnl_depth = round(abs(depth[i][j] - focus))
             
-            krnl_depth = abs(depth[i][j] - focus)
-            krnl_depth = round(krnl_depth)
-            
-        
             if krnl_depth**2 < len(krnls_db):
                 krnl = krnls_db[krnl_depth**2]
             else:
                 krnl = krnls_db[len(krnls_db)-1]
+        
             
-            krnl_size = len(krnl)
-            
-            krnl_range = int((krnl_size - 1) / 2)
-            
-            krnl_i = 0
-            for k in range(i-krnl_range, i+krnl_range+1):
-                
-                krnl_j = 0
-                for h in range(j-krnl_range, j+krnl_range+1):
-                    
-                    
-                    if h < 0 or h >= len(rgb[0]):
-                        krnl_j += 1
-                        continue
-                    
-                    
-                    if k < 0 or k >= len(rgb):
-                        krnl_j += 1
-                        continue
-                    
-                    
-                    rgb_new[i][j] += rgb[k][h] * krnl[krnl_i][krnl_j]
-                    krnl_j += 1
-                krnl_i += 1
+            for x in range(krnl_size):
+                for y in range(krnl_size):
+                    rgb_new[i][j] += krnl[x][y] * rgb[i-krnl_size+x][j-krnl_size+y]
             
                     
     return rgb_new
@@ -135,7 +131,7 @@ def main_convolution():
     start_time = time.time()
     
     #Creazione del database di kernel
-    krnl_db = kernel_db_std(1000)
+    krnl_db = kernel_db_std(1000, 7)
     #krnl_db = kernel_db_size(20)
     #krnl_db = kernel_db_size_std(10)
     
@@ -143,13 +139,14 @@ def main_convolution():
     print("Database construction time is: ", str(end_time-start_time)+"s")
     
     #Convoluzione
-    rgb = convolution(rgb, depth, krnl_db, 11)
+    print(krnl_db[999])
+    rgb = convolution(rgb, depth, krnl_db, len(krnl_db[0]), 11)
     
     end_time = time.time()
     print("Convolution time is: ", str(end_time-start_time)+"s")
     
     #Salvataggio dell'immagine
-    save_srgb(rgb, 'ResImages/finalSTD(1-100 - 7).png')
+    save_srgb(rgb, 'ResImages/resGAUSS(17 - 0.1_100)[88]norm.png')
     
 
 if __name__=='__main__':
