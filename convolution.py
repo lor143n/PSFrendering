@@ -93,6 +93,15 @@ def kernel_db_size_std(db_size):
         
     return db
         
+def CoC():
+    #50mm to m  
+    focal_length = 50.0 / 1000
+            
+    f = 1/focal_length + 1/focus
+    magnification = f / (focus - f)
+    Aperture = krnl_size
+            
+    return round(Aperture * magnification * (abs(depth[i][j] - focus) / depth[i][j]))
         
             
 @njit()
@@ -106,10 +115,21 @@ def convolution(rgb, depth, krnls_db, krnl_size, focus):
     for i in range(krnl_range, image_width - krnl_range):
         for j in range(krnl_range, image_height - krnl_range):
             
-            krnl_depth = round(abs(depth[i][j] - focus))
             
-            if krnl_depth**2 < len(krnls_db):
-                krnl = krnls_db[krnl_depth**2]
+            #Calcolo del circle of confusion
+            
+            #85mm to m  
+            focal_length = 18.0 / 1000
+            
+            f = 1/focal_length + 1/focus
+            magnification = f / (focus - f)
+            Aperture = 1.8
+            
+            CoC = round(Aperture * magnification * (abs(depth[i][j] - focus) / depth[i][j]))
+            
+            
+            if CoC < len(krnls_db):
+                krnl = krnls_db[CoC]
             else:
                 krnl = krnls_db[len(krnls_db)-1]
         
@@ -132,7 +152,7 @@ def main_convolution():
     start_time = time.time()
     
     #Creazione del database di kernel
-    krnl_db = kernel_db_std(1000, 7)
+    krnl_db = kernel_db_std(10000, 7)
     #krnl_db = kernel_db_size(20)
     #krnl_db = kernel_db_size_std(10)
     
@@ -140,13 +160,13 @@ def main_convolution():
     print("Database construction time is: ", str(end_time-start_time)+"s")
     
     #Convoluzione
-    rgb = convolution(rgb, depth, krnl_db, len(krnl_db[0]), 5)
+    rgb = convolution(rgb, depth, krnl_db, len(krnl_db[0]), 1)
     
     end_time = time.time()
     print("Convolution time is: ", str(end_time-start_time)+"s")
     
     #Salvataggio dell'immagine
-    save_srgb(rgb, 'ResImages/pebble2GAUSS(7 - 0.1_100)[7]f[5].png')
+    save_srgb(rgb, 'ResImages/pebbleCoCGAUSS(7 - 0.1_1000)[7]f[2][85mm].png')
     
 
 if __name__=='__main__':
