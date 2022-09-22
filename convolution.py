@@ -1,5 +1,6 @@
 from cmath import exp, pi, sqrt
 from ctypes import sizeof
+from distutils.command.upload import upload
 import math
 import numpy as np
 import OpenEXR
@@ -106,7 +107,6 @@ def convolution(rgb, depth, krnls_db, krnl_size, focus):
             
             
             #Calcolo del circle of confusion
-            
             #85mm to m  
             focal_length = 18.0 / 1000
             
@@ -129,6 +129,68 @@ def convolution(rgb, depth, krnls_db, krnl_size, focus):
             
                     
     return rgb_new
+
+
+'''
+INIZIO NUOVO CODICE ------------------------------------------------------------------------------
+'''
+
+
+@njit()
+def upload_PSF(depth, xy):
+    
+    
+    return 
+    
+   
+   
+@njit()
+def KernelBuilding(size, pos, depth):
+    
+    kernel = []
+    kernelSum = 0
+    
+    for i in range(size):
+        for j in range(size):
+            
+            psfij = upload_PSF(depth[i,j], pos)
+            
+            ijvalue = psfij[i,j]
+            
+            kernel[i][j] = ijvalue
+            
+            kernelSum += ijvalue
+            
+    kernel /= kernelSum
+    
+    return kernel
+   
+@njit()
+def psf_convolution(rgb, depth, krnl_size, focus):
+    rgb_new = rgb*0
+    
+    krnl_range = int((krnl_size - 1) / 2)
+    image_width = len(rgb)
+    image_height = len(rgb[0])
+    
+    for i in range(krnl_range, image_width - krnl_range):
+        for j in range(krnl_range, image_height - krnl_range):
+            
+            
+            krnl = KernelBuilding(krnl_size, (i,j), depth)
+            
+            for x in range(krnl_size):
+                for y in range(krnl_size):
+                    rgb_new[i][j] += krnl[x][y] * rgb[i-krnl_size+x][j-krnl_size+y]
+            
+                    
+    return rgb_new
+     
+
+    
+'''
+FINE NUOVO CODICE ------------------------------------------------------------------------------
+'''
     
     
 def main_convolution():
