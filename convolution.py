@@ -52,7 +52,6 @@ def save_exr(img, outpath):
 
 
 def gaussian_kernel(size, std):
-    
     '''Returns a 2D Gaussian kernel array.'''
     kernel1d = signal.windows.gaussian(size, std=std)
     kernel2d = np.outer(kernel1d, kernel1d)
@@ -92,16 +91,6 @@ def kernel_db_size_std(db_size):
         disp_i = disp_i + 2
         
     return db
-        
-def CoC():
-    #50mm to m  
-    focal_length = 50.0 / 1000
-            
-    f = 1/focal_length + 1/focus
-    magnification = f / (focus - f)
-    Aperture = krnl_size
-            
-    return round(Aperture * magnification * (abs(depth[i][j] - focus) / depth[i][j]))
         
             
 @njit()
