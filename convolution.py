@@ -135,25 +135,45 @@ def convolution(rgb, depth, krnls_db, krnl_size, focus):
 INIZIO NUOVO CODICE ------------------------------------------------------------------------------
 '''
 
+'''
+#@njit()
+def upload_PSF(depth, xy, db, focus):
+    # Caricamento dell PSF
+    # Per ora restituisce un kernel gaussiano
+    focal_length = 18.0 / 1000
+            
+    f = 1/focal_length + 1/focus
+    magnification = f / (focus - f)
+    Aperture = 1.8
+            
+    CoC = round(Aperture * magnification * (abs(depth - focus) / depth))
 
-@njit()
-def upload_PSF(depth, xy):
+    krnl = db[CoC]
     
+    return krnl 
     
-    return 
-    
-   
-   
-@njit()
-def KernelBuilding(size, pos, depth):
+#@njit
+def newKernel(size):
     
     kernel = []
+    
+    for i in range(size):
+        kernel.append([])
+        for j in range(size):
+            kernel[i].append(0)
+            
+    return kernel
+   
+#@njit()
+def KernelBuilding(size, pos, depth, focus, db):
+    
+    kernel = newKernel(size)
     kernelSum = 0
     
     for i in range(size):
         for j in range(size):
             
-            psfij = upload_PSF(depth[i,j], pos)
+            psfij = upload_PSF(depth[i,j], pos, db,focus)
             
             ijvalue = psfij[i,j]
             
@@ -165,8 +185,10 @@ def KernelBuilding(size, pos, depth):
     
     return kernel
    
+'''
+
 @njit()
-def psf_convolution(rgb, depth, krnl_size, focus):
+def psf_convolution(rgb, depth, krnls_db, krnl_size, focus):
     rgb_new = rgb*0
     
     krnl_range = int((krnl_size - 1) / 2)
@@ -174,10 +196,56 @@ def psf_convolution(rgb, depth, krnl_size, focus):
     image_height = len(rgb[0])
     
     for i in range(krnl_range, image_width - krnl_range):
+        print(i)
         for j in range(krnl_range, image_height - krnl_range):
             
             
-            krnl = KernelBuilding(krnl_size, (i,j), depth)
+            
+            #KERNEL BUILDING ----
+            
+            
+            #KERNEL GENERATION --
+            krnl = [[0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0],]
+            kernelSum = 0
+                    
+            #KERNEL GENERATION --
+    
+            for h in range(krnl_size):
+                for k in range(krnl_size):
+            
+            
+                    #psfij = upload_PSF(depth[i,j], pos, db,focus)
+                    #PSF UPLOAD --
+                    
+                    focal_length = 18.0 / 1000
+            
+                    f = 1/focal_length + 1/focus
+                    magnification = f / (focus - f)
+                    Aperture = 1.8
+            
+                    CoC = round(Aperture * magnification * (abs(depth[i][j] - focus) / depth[i][j]))
+                    if CoC < len(krnls_db):
+                        psfij = krnls_db[CoC]
+                    else:
+                        psfij = krnls_db[len(krnls_db)-1]  
+                    
+                    #PSF UPLOAD --
+                    
+                    ijvalue = psfij[h,k]
+            
+                    krnl[h][k] = ijvalue
+            
+                    kernelSum += ijvalue
+            
+            #krnl = krnl / kernelSum
+            
+            #KERNEL BUILDING ----
             
             for x in range(krnl_size):
                 for y in range(krnl_size):
@@ -195,7 +263,7 @@ FINE NUOVO CODICE --------------------------------------------------------------
     
 def main_convolution():
 
-
+    '''
     #Caricamento dell'immagine exr
     #(rgb, depth) = load_rgbd('TestImages/Scena Davide/rgbd.exr')
     (rgb, depth) = load_rgbd('TestImages/pebble_scattering_2.exr')
@@ -218,6 +286,24 @@ def main_convolution():
     
     #Salvataggio dell'immagine
     save_srgb(rgb, 'ResImages/pebbleCoCGAUSS(7 - 0.1_1000)[7]f[2][85mm].png')
+    '''
+    
+    (rgb, depth) = load_rgbd('TestImages/pebble_scattering_2.exr')
+    
+    start_time = time.time()
+    
+    krnl_db = kernel_db_std(10000, 7)
+    
+    end_time = time.time()
+    print("Database construction time is: ", str(end_time-start_time)+"s")
+    
+    rgb = psf_convolution(rgb, depth, krnl_db, len(krnl_db[0]), 1)
+    
+    end_time = time.time()
+    print("Convolution time is: ", str(end_time-start_time)+"s")
+    
+    save_srgb(rgb, 'ResImages/newRes3.png')
+    
     
 
 if __name__=='__main__':
