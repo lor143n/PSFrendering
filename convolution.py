@@ -44,6 +44,7 @@ def save_srgb(rgb, outpath):
   
   
 def save_exr(img, outpath):
+  print(img.shape)
   r, g, b = img
   height, width = img.shape
   header = OpenEXR.Header(width, height)
@@ -271,7 +272,7 @@ def main_convolution():
     
     '''
     
-    (rgb, depth) = load_rgbd('TestImages/water2.exr')
+    (rgb, depth) = load_rgbd('TestImages/flower_scattering.exr')
     
     start_time = time.time()
     
@@ -283,7 +284,7 @@ def main_convolution():
     
     
     ker_size = 15
-    focus = 4
+    focus = 6
     aperture = 45 #mm
     focal_length = 50 #mm
     #f-stop = focal_length / aperture 
@@ -293,7 +294,8 @@ def main_convolution():
     end_time = time.time()
     print("Convolution time is: ", str(end_time-start_time)+"s")
     
-    save_srgb(rgb, 'ResImages/water2_f15['+str(focus)+']['+str(focal_length)+']['+str(focal_length/aperture)+'].png')
+    save_exr(rgb, 'ResImages/flower_f15['+str(focus)+']['+str(focal_length)+']['+str(focal_length/aperture)+'].exr')
+    #save_srgb(rgb, 'ResImages/water2_f15['+str(focus)+']['+str(focal_length)+']['+str(focal_length/aperture)+'].png')
     '''
     for i in range(len(depth)):
         for j in range(len(depth[0])):
