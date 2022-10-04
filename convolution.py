@@ -271,20 +271,20 @@ def main_convolution():
     
     '''
     
-    (rgb, depth) = load_rgbd('TestImages/flower_scattering.exr')
+    (rgb, depth) = load_rgbd('TestImages/water2.exr')
     
     start_time = time.time()
     
-    krnl_db = kernel_db_std(10000, 7)
+    krnl_db = kernel_db_std(10000, 15)
     
     end_time = time.time()
     print("Database construction time is: ", str(end_time-start_time)+"s")
     
     
     
-    ker_size = 7
-    focus = 6
-    aperture = 10 #mm
+    ker_size = 15
+    focus = 4
+    aperture = 45 #mm
     focal_length = 50 #mm
     #f-stop = focal_length / aperture 
     
@@ -293,11 +293,11 @@ def main_convolution():
     end_time = time.time()
     print("Convolution time is: ", str(end_time-start_time)+"s")
     
-    save_srgb(rgb, 'ResImages/flower_f['+str(focus)+']['+str(focal_length)+']['+str(focal_length/aperture)+'].png')
+    save_srgb(rgb, 'ResImages/water2_f15['+str(focus)+']['+str(focal_length)+']['+str(focal_length/aperture)+'].png')
     '''
     for i in range(len(depth)):
         for j in range(len(depth[0])):
-            print(rgb[i][j])
+            print(depth[i][j])
     '''
 
     
