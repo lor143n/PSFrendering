@@ -43,10 +43,9 @@ def save_srgb(rgb, outpath):
   Image.fromarray(srgb).save(outpath)
   
   
-def save_exr(img, outpath):
-  print(img.shape)
-  r, g, b = img
-  height, width = img.shape
+def save_exr(rgb, outpath):
+  r, g, b = np.split(rgb, 3, axis=-1)
+  height, width = rgb.shape[:-1]
   header = OpenEXR.Header(width, height)
 
   exr = OpenEXR.OutputFile(outpath, header)
