@@ -20,7 +20,9 @@ def kernel_db_std(depths_count, focus, k_size, aperture, focal_length):
     N = (focal_length)/aperture 
     
     for i in range(1,depths_count):
-        CoC = round((abs(focus-i / i)) * ((focal_length**2)/N * abs(focus-focal_length)) * 1000) 
+        CoC = (abs((focus-i) / i)) * ((focal_length**2)/N * abs(focus-focal_length)) * 1000 #to mm
+        if i == focus:
+            CoC += 0.01
         db.append(imaMan.gaussian_kernel(k_size, CoC))
     
     return db
