@@ -30,7 +30,7 @@ def kernel_db_std(depths_count, focus, k_size, aperture, focal_length):
    
 
 @njit(parallel = True)
-def psf_convolution(rgb, depth, krnls_db, focus, focal_length, aperture):
+def psf_convolution(rgb, depth, krnls_db, focus):
     
     rgb_new = rgb*0
     krnl_size = len(krnls_db[0])
@@ -70,9 +70,9 @@ def psf_convolution(rgb, depth, krnls_db, focus, focal_length, aperture):
 
 def main():
     
-    ker_size = 7
-    focus = 5
-    aperture = 10 #mm
+    ker_size = 17
+    focus = 6
+    aperture = 30 #mm
     focal_length = 50 #mm 
     
     
@@ -91,11 +91,11 @@ def main():
     #Gaussian kernels database with std from 0.1 to 10.00
     #Gaussian kernels with size between 0 and 15 has no changes with std grater than 10.00
     #depths_count must be greater than focus level
-    krnl_db = kernel_db_std(100, ker_size, focus, aperture, focal_length)
+    krnl_db = kernel_db_std(100, focus, ker_size, aperture / 1000, focal_length / 1000)
 
     db_end_time = time.time()
     
-    rgb = psf_convolution(rgb, depth, krnl_db, focus, focal_length / 1000, aperture / 1000)
+    rgb = psf_convolution(rgb, depth, krnl_db, focus)
     
     conv_end_time = time.time()
     
@@ -103,9 +103,9 @@ def main():
     print("Convolution time is: ", str(conv_end_time-start_time)+"s")
     
     if export == 1:
-        imaMan.save_exr(rgb, 'ResImages/flower_f15['+str(focus)+']['+str(focal_length)+']['+str(focal_length/aperture)+'].exr')
+        imaMan.save_exr(rgb, 'ResImages/flower_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].exr')
     else:
-        imaMan.save_srgb(rgb, 'ResImages/water2_f15['+str(focus)+']['+str(focal_length)+']['+str(focal_length/aperture)+'].png')
+        imaMan.save_srgb(rgb, 'ResImages/flower_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].png')
 
     
 if __name__=='__main__':
