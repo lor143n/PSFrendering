@@ -14,11 +14,15 @@ def upload_PSF(depth, xy, db, focus):
     return 
 
 
-def kernel_db_std(db_size, k_size):
-    db = []
+def kernel_db_std(depths_count, focus, k_size, aperture, focal_length):
     
-    for i in range(db_size):
-        db.append(imaMan.gaussian_kernel(k_size,math.log(i+1)))
+    db = []
+    N = (focal_length)/aperture 
+    
+    for i in range(1,depths_count):
+        CoC = round((abs(focus-i / i)) * ((focal_length**2)/N * abs(focus-focal_length)) * 1000) 
+        db.append(imaMan.gaussian_kernel(k_size, CoC))
+    
     return db
 
    
@@ -40,15 +44,12 @@ def psf_convolution(rgb, depth, krnls_db, focus, focal_length, aperture):
     
             for h in range(krnl_size):
                 for k in range(krnl_size):
-                                 
-                    N = (focal_length)/aperture
+                       
+                       
                     dep = round(depth[i][j])
-                    foc = focus 
-    
-                    CoC = round((abs(dep - foc) / dep) * ((focal_length**2)/N * abs(foc-focal_length))*1000) 
-
-                    if CoC < len(krnls_db):
-                        psfij = krnls_db[CoC]
+                                 
+                    if dep < len(krnls_db):
+                        psfij = krnls_db[dep]
                     else:
                         psfij = krnls_db[len(krnls_db)-1]
                     
@@ -69,7 +70,7 @@ def main():
     
     ker_size = 7
     focus = 5
-    aperture = 45 #mm
+    aperture = 10 #mm
     focal_length = 50 #mm 
     
     
@@ -87,7 +88,8 @@ def main():
     
     #Gaussian kernels database with std from 0.1 to 10.00
     #Gaussian kernels with size between 0 and 15 has no changes with std grater than 10.00
-    krnl_db = kernel_db_std(100, ker_size)
+    #depths_count must be greater than focus level
+    krnl_db = kernel_db_std(100, ker_size, focus, aperture, focal_length)
 
     db_end_time = time.time()
     
