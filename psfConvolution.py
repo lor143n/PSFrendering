@@ -71,8 +71,8 @@ def psf_convolution(rgb, depth, krnls_db, focus):
 def main():
     
     ker_size = 17
-    focus = 6
-    aperture = 30 #mm
+    focus = 4
+    aperture = 40 #mm
     focal_length = 50 #mm 
     
     
@@ -83,7 +83,7 @@ def main():
     export = int(export)
     print('Algorithm start')
     
-    (rgb, depth) = imaMan.load_rgbd('TestImages/flower_scattering.exr')
+    (rgb, depth) = imaMan.load_rgbd('TestImages/water2.exr')
     
     
     start_time = time.time()
@@ -103,9 +103,9 @@ def main():
     print("Convolution time is: ", str(conv_end_time-start_time)+"s")
     
     if export == 1:
-        imaMan.save_exr(rgb, 'ResImages/flower_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].exr')
+        imaMan.save_exr(rgb, 'ResImages/water_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].exr')
     else:
-        imaMan.save_srgb(rgb, 'ResImages/flower_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].png')
+        imaMan.save_srgb(rgb, 'ResImages/water_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].png')
 
     
 if __name__=='__main__':
