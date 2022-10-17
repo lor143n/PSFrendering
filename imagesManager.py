@@ -23,6 +23,19 @@ def load_rgbd(impath):
     E.close()
     return rgb, depth
 
+def load_psf(impath):
+
+    E = OpenEXR.InputFile(impath)
+    dw = E.header()['dataWindow']
+    width = dw.max.x - dw.min.x + 1
+    height = dw.max.y - dw.min.y + 1
+
+    buffer = E.channel('Y', PixelType(OpenEXR.FLOAT))
+    depth = np.frombuffer(buffer, dtype=np.float32).reshape(height, width)
+
+    E.close()
+    return depth
+
 def save_srgb(rgb, outpath):
     srgb = np.where(rgb <= 0.0031308,
                   12.92 * rgb,

@@ -1,9 +1,14 @@
 from array import array
+from curses.panel import top_panel
+from importlib.resources import path
 import math
 from numba import njit, prange, float64
-from numpy import float64
+from numpy import float64, ix_, pad
+from scipy import ndimage as nim
+from PIL import Image
 import imagesManager as imaMan
 import time
+import os
 
 
 
@@ -27,6 +32,31 @@ def kernel_db_std(depths_count, focus, k_size, aperture, focal_length):
     
     return db
 
+def psf_db(krnl_size):
+    
+    camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/psf/petzval/focus-5.00m/aperture-f1'
+    krnl_range = int((krnl_size - 1) / 2)
+    
+    for directory in os.listdir(camera_path):
+        
+        dir_path = os.path.join(camera_path, directory)
+        for file in os.listdir(dir_path):
+            
+            file_path = os.path.join(dir_path, file)
+            big_psf = imaMan.load_psf(file_path)
+            ascom = nim.center_of_mass(big_psf)
+            com = (round(ascom[0]), round(ascom[1]))
+            
+            
+            big_psf_pad = pad(big_psf, (krnl_range,))
+            
+            print(str(com[0])+' : '+str(com[0] + krnl_range)+' , '+str(com[1]-krnl_range)+' : '+str(com[1]+krnl_range))
+            ker_psf = big_psf_pad[com[0] : com[0] + (2*krnl_range)+1 , com[1] : com[1]+ (2*krnl_range)+1]
+            imaMan.save_srgb(ker_psf, "testPSf/"+directory+file+" : "+str(com[0])+"-"+str(com[1])+".png")
+            
+            
+    return
+
    
 
 @njit(parallel = True)
@@ -35,6 +65,9 @@ def psf_convolution(rgb, depth, krnls_db, focus):
     rgb_new = rgb*0
     krnl_size = len(krnls_db[0])
     krnl_range = int((krnl_size - 1) / 2)
+    
+    #aggiungere padding
+    
     image_width = len(rgb)
     image_height = len(rgb[0])
     
@@ -49,6 +82,7 @@ def psf_convolution(rgb, depth, krnls_db, focus):
                        
                        
                     dep = round(depth[i][j])
+                    pos = 0
                                  
                     if dep < len(krnls_db):
                         psfij = krnls_db[dep]
@@ -70,11 +104,13 @@ def psf_convolution(rgb, depth, krnls_db, focus):
 
 def main():
     
+    '''
     ker_size = 17
-    focus = 4
-    aperture = 40 #mm
+    focus = 5
+    aperture = 50 #mm
     focal_length = 50 #mm 
     
+    #PETZVAL FOCUS-5.0m aperture f/1
     
     export = input('Export type: (1) exr (2) png\n')
     while export != '1' and export != '2' :
@@ -106,7 +142,10 @@ def main():
         imaMan.save_exr(rgb, 'ResImages/water_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].exr')
     else:
         imaMan.save_srgb(rgb, 'ResImages/water_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].png')
-
+    '''
+    
+    
+    psf_db(13)
     
 if __name__=='__main__':
     main()
