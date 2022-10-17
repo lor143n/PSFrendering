@@ -2,13 +2,15 @@ from array import array
 from curses.panel import top_panel
 from importlib.resources import path
 import math
+from select import select
 from numba import njit, prange, float64
-from numpy import float64, ix_, pad
+import numpy as np
 from scipy import ndimage as nim
 from PIL import Image
 import imagesManager as imaMan
 import time
 import os
+import re
 
 
 
@@ -32,38 +34,56 @@ def kernel_db_std(depths_count, focus, k_size, aperture, focal_length):
     
     return db
 
-def psf_db(krnl_size):
+def psf_db(krnl_size, psf_dim, img_width):
     
-    camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/psf/petzval/focus-5.00m/aperture-f1'
+    camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/psf_test/petzval/focus-5.00m/aperture-f1'
     krnl_range = int((krnl_size - 1) / 2)
     
+    psf_dict = {}
+    
     for directory in os.listdir(camera_path):
+        dir_clean = directory.split('-')
+        dir_depth = float(dir_clean[1].split('m')[0])        
+        print(dir_depth)
+        psf_dict[dir_depth] = []
         
         dir_path = os.path.join(camera_path, directory)
         for file in os.listdir(dir_path):
             
             file_path = os.path.join(dir_path, file)
             big_psf = imaMan.load_psf(file_path)
-            ascom = nim.center_of_mass(big_psf)
-            com = (round(ascom[0]), round(ascom[1]))
             
             
-            big_psf_pad = pad(big_psf, (krnl_range,))
+            com = nim.center_of_mass(big_psf)
             
-            print(str(com[0])+' : '+str(com[0] + krnl_range)+' , '+str(com[1]-krnl_range)+' : '+str(com[1]+krnl_range))
-            ker_psf = big_psf_pad[com[0] : com[0] + (2*krnl_range)+1 , com[1] : com[1]+ (2*krnl_range)+1]
-            imaMan.save_srgb(ker_psf, "testPSf/"+directory+file+" : "+str(com[0])+"-"+str(com[1])+".png")
+            zoom_adj = psf_dim / img_width
+            
+            shift_x, center_x = np.modf(com[0])
+            shift_y, center_y = np.modf(com[1])
+            
+            center_x = int(center_x)
+            center_y = int(center_y)
             
             
-    return
+            big_psf_pad = np.pad(big_psf, (krnl_range,))
+            
+            ker_psf = big_psf_pad[center_x : center_x + (2*krnl_range)+1 , center_y : center_y + (2*krnl_range)+1]
+            
+            ker_psf = nim.shift(ker_psf, (shift_x, shift_y))
+            
+            psf_dict[dir_depth].append( (com[0],com[1],ker_psf))
+            
+            #imaMan.save_srgb(ker_psf, "testPSf/"+directory+file+" : "+str(com[0])+"-"+str(com[1])+".png")
+            
+    return psf_dict
 
    
 
-@njit(parallel = True)
-def psf_convolution(rgb, depth, krnls_db, focus):
+#@njit(parallel = True)
+def psf_convolution(rgb, depth, krnls_db, focus, camera_depths):
     
     rgb_new = rgb*0
-    krnl_size = len(krnls_db[0])
+    krnl_size = 13
     krnl_range = int((krnl_size - 1) / 2)
     
     #aggiungere padding
@@ -71,7 +91,8 @@ def psf_convolution(rgb, depth, krnls_db, focus):
     image_width = len(rgb)
     image_height = len(rgb[0])
     
-    for i in prange(krnl_range, image_width - krnl_range):
+    for i in range(krnl_range, image_width - krnl_range): #p
+        print(i)
         for j in range(krnl_range, image_height - krnl_range):
             
             krnl = [0.0]*(krnl_size**2)
@@ -81,15 +102,49 @@ def psf_convolution(rgb, depth, krnls_db, focus):
                 for k in range(krnl_size):
                        
                        
-                    dep = round(depth[i][j])
-                    pos = 0
-                                 
+                    dep = round(depth[i][j]*10)/10
+                    chosen_dep = 0
+                    
+                    for dp_index in range(len(camera_depths)):
+                        
+                        if dp_index == len(camera_depths)-1:
+                            chosen_dep = camera_depths[len(camera_depths)-1]
+                            break
+                        
+                        if dep >= camera_depths[dp_index] and dep <= camera_depths[dp_index+1]:
+                             
+                            diff1 = dep - camera_depths[dp_index]
+                            diff2 = camera_depths[dp_index+1] - dep
+                             
+                            if diff1 <= diff2:
+                                chosen_dep = camera_depths[dp_index]
+                            else:
+                                chosen_dep = camera_depths[dp_index+1]
+                            
+                            break
+                    
+                    pos = (i,j)
+                    
+                    krnls_db[chosen_dep]
+                    
+                    min_distance = 10000
+                    selected_krnl = []
+                    
+                    for psf in krnls_db[chosen_dep]:
+                        dist = math.sqrt((i-psf[0])**2 + (j-psf[1])**2)
+                        if dist < min_distance:
+                            min_distance = dist
+                            selected_krnl = psf[2]
+                    
+                    '''
                     if dep < len(krnls_db):
                         psfij = krnls_db[dep]
                     else:
                         psfij = krnls_db[len(krnls_db)-1]
+                    '''
                     
-                    ijvalue = psfij[h][k]
+                    ijvalue = selected_krnl[h][k]
+                    #ijvalue = psfij[h][k]
                     krnl[h*krnl_size + k] = ijvalue
                     kernelSum += ijvalue
             
@@ -121,7 +176,6 @@ def main():
     
     (rgb, depth) = imaMan.load_rgbd('TestImages/water2.exr')
     
-    
     start_time = time.time()
     
     #Gaussian kernels database with std from 0.1 to 10.00
@@ -131,7 +185,7 @@ def main():
 
     db_end_time = time.time()
     
-    rgb = psf_convolution(rgb, depth, krnl_db, focus)
+    rgb = psf_convolution(rgb, depth, krnl_db, focus, camera_depths)
     
     conv_end_time = time.time()
     
@@ -144,8 +198,53 @@ def main():
         imaMan.save_srgb(rgb, 'ResImages/water_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].png')
     '''
     
+    ker_size = 13
+    focus = 5
+    aperture = 50 #mm
+    focal_length = 50 #mm 
     
-    psf_db(13)
+    #PETZVAL FOCUS-5.0m aperture f/1
+    
+    export = input('Export type: (1) exr (2) png\n')
+    while export != '1' and export != '2' :
+        print("Type 1 or 2")
+        export = input('Export type: (1) exr (2) png\n')
+    export = int(export)
+    print('Algorithm start')
+    
+    camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/psf_test/petzval/focus-5.00m/aperture-f1'
+    
+    camera_depths = []
+    
+    for directory in os.listdir(camera_path):
+        
+        dir_clean = directory.split('-')
+        dir_depth = float(dir_clean[1].split('m')[0])        
+        camera_depths.append(dir_depth)
+        
+    camera_depths.sort()
+    
+    (rgb, depth) = imaMan.load_rgbd('TestImages/water2.exr')
+    
+    start_time = time.time()
+    
+    krnl_db = psf_db(13, 1024, len(rgb[0]))
+    
+    db_end_time = time.time()
+    print("Database construction time is: ", str(db_end_time-start_time)+"s")
+    
+    rgb = psf_convolution(rgb, depth, krnl_db, focus, camera_depths)
+    
+    conv_end_time = time.time()
+    
+    print("Convolution time is: ", str(conv_end_time-start_time)+"s")
+    
+    if export == 1:
+        imaMan.save_exr(rgb, 'ResImages/water_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].exr')
+    else:
+        imaMan.save_srgb(rgb, 'ResImages/water_size['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].png')
+        
+
     
 if __name__=='__main__':
     main()
