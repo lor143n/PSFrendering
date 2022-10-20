@@ -35,9 +35,8 @@ def kernel_db_std(depths_count, focus, k_size, aperture, focal_length):
     return db
 
 
-def psf_db(krnl_size, psf_dim, img_width):
+def psf_db(krnl_size, psf_dim, img_width, camera_path):
     
-    camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/psf/petzval/focus-5.00m/aperture-f1'
     krnl_range = int((krnl_size - 1) / 2)
     
     psf_dict = []
@@ -65,7 +64,7 @@ def psf_db(krnl_size, psf_dim, img_width):
             center_x = int(center_x)
             center_y = int(center_y)
             
-            big_psf_pad = np.pad(big_psf, (krnl_range,))
+            big_psf_pad = np.pad(big_psf, ((krnl_range, krnl_range), (krnl_range, krnl_range)))
             
             ker_psf = big_psf_pad[center_x : center_x + (2*krnl_range)+1 , center_y : center_y + (2*krnl_range)+1]
             
@@ -81,9 +80,9 @@ def psf_db(krnl_size, psf_dim, img_width):
   
 
 @njit()
-def psf_convolution(rgb, depth, krnls_db, focus, camera_depths):
+def psf_convolution(rgb, res, depth, krnls_db, focus, camera_depths):
     
-    rgb_new = rgb*0
+    rgb_new = res
     krnl_size = 13
     krnl_range = int((krnl_size - 1) / 2)
     
@@ -148,13 +147,16 @@ def psf_convolution(rgb, depth, krnls_db, focus, camera_depths):
                     kernelSum += ijvalue
             
             
+            
             #NORMALIZATION
             for elem in range(len(krnl)):
                 krnl[elem] /= kernelSum
             
+            
             for x in range(krnl_size):
                 for y in range(krnl_size):
-                    rgb_new[i][j] += krnl[x*krnl_size+y] * rgb[i-krnl_size+x][j-krnl_size+y]
+                    rgb_new[i-krnl_range][j-krnl_range] += krnl[x*krnl_size+y] * rgb[i-krnl_size+x][j-krnl_size+y]
+            
                       
     return rgb_new
        
@@ -231,22 +233,32 @@ def main():
     
     start_time = time.time()
     
-    krnl_db = psf_db(13, 1024, len(rgb[0]))
+    krnl_db = psf_db(ker_size, 1024, len(rgb[0]), camera_path)
     
     db_end_time = time.time()
     print("Database construction time is: ", str(db_end_time-start_time)+"s")
     
+    start_time = time.time()
     
-    rgb = psf_convolution(rgb, depth, krnl_db, focus, camera_depths)
+    krnl_range = int((ker_size - 1) / 2)
+    rgb_res = rgb*0
+    
+    rgb = np.pad(rgb, ((krnl_range, krnl_range), (krnl_range, krnl_range), (0, 0)))
+    depth = np.pad(depth, ((krnl_range, krnl_range), (krnl_range, krnl_range)))
+    
+    print(str(len(rgb))+" - "+str(len(rgb[0])))
+    print(str(len(rgb_res))+" - "+str(len(rgb_res[0])))
+    
+    rgb_res = psf_convolution(rgb, rgb_res, depth, krnl_db, focus, camera_depths)
     
     conv_end_time = time.time()
     
     print("Convolution time is: ", str(conv_end_time-start_time)+"s")
     
     if export == 1:
-        imaMan.save_exr(rgb, 'ResImages/tree['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].exr')
+        imaMan.save_exr(rgb_res, 'ResImages/treePADzero['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].exr')
     else:
-        imaMan.save_srgb(rgb, 'ResImages/tree['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].png')
+        imaMan.save_srgb(rgb_res , 'ResImages/treePADzero['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].png')
         
 
     
