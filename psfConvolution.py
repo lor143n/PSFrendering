@@ -155,7 +155,7 @@ def psf_convolution(rgb, res, depth, krnls_db, focus, camera_depths):
             
             for x in range(krnl_size):
                 for y in range(krnl_size):
-                    rgb_new[i-krnl_range][j-krnl_range] += krnl[x*krnl_size+y] * rgb[i-krnl_size+x][j-krnl_size+y]
+                    rgb_new[i-krnl_range][j-krnl_range] += krnl[x*krnl_size+y] * rgb[i-krnl_range+x][j-krnl_range+y]
             
                       
     return rgb_new
@@ -243,8 +243,8 @@ def main():
     krnl_range = int((ker_size - 1) / 2)
     rgb_res = rgb*0
     
-    rgb = np.pad(rgb, ((krnl_range, krnl_range), (krnl_range, krnl_range), (0, 0)))
-    depth = np.pad(depth, ((krnl_range, krnl_range), (krnl_range, krnl_range)))
+    rgb = np.pad(rgb, ((krnl_range, krnl_range), (krnl_range, krnl_range), (0, 0)), mode='symmetric')
+    depth = np.pad(depth, ((krnl_range, krnl_range), (krnl_range, krnl_range)), mode='symmetric')
     
     print(str(len(rgb))+" - "+str(len(rgb[0])))
     print(str(len(rgb_res))+" - "+str(len(rgb_res[0])))
@@ -256,9 +256,9 @@ def main():
     print("Convolution time is: ", str(conv_end_time-start_time)+"s")
     
     if export == 1:
-        imaMan.save_exr(rgb_res, 'ResImages/treePADzero['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].exr')
+        imaMan.save_exr(rgb_res, 'ResImages/treePADsym2['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].exr')
     else:
-        imaMan.save_srgb(rgb_res , 'ResImages/treePADzero['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].png')
+        imaMan.save_srgb(rgb_res , 'ResImages/treePADsym2['+str(ker_size)+']foc['+str(focus)+']foc_length['+str(focal_length)+']f-stop['+str(focal_length/aperture)+'].png')
         
 
     
