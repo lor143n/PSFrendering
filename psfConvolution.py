@@ -194,7 +194,7 @@ if __name__=='__main__':
     
     ker_size = 13
     export_type = '.png'
-    image_file = 'temple1024_100'
+    image_file = 'quads1024_100' #quads
     camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/psf/petzval/focus-5.00m/aperture-f1'
     
     convolution_init(ker_size, export_type, image_file, camera_path)
