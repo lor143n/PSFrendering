@@ -56,12 +56,11 @@ def save_exr(rgb, outpath):
     exr.close()
     
 def save_exr_psf(rgb, outpath):
-    r = np.split(rgb, 1, axis=-1)
-    height, width = rgb.shape[:-1]
+    height, width = rgb.shape
     header = OpenEXR.Header(width, height)
 	
     exr = OpenEXR.OutputFile(outpath, header)
-    exr.writePixels({'Y': r.tobytes()})
+    exr.writePixels({'Y': rgb.tobytes()})
     exr.close()
 
   
