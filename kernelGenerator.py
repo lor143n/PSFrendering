@@ -27,7 +27,6 @@ def kernelFilesGenerator(krnl_size, camera_path, camera_name):
             file_path = os.path.join(dir_path, file)
             big_psf = imaMan.load_psf(file_path)
             
-            
             com = nim.center_of_mass(big_psf)
             
             shift_x, center_x = np.modf(com[0])
@@ -41,8 +40,10 @@ def kernelFilesGenerator(krnl_size, camera_path, camera_name):
             ker_psf = big_psf_pad[center_x : center_x + (2*krnl_range)+1 , center_y : center_y + (2*krnl_range)+1]
             
             ker_psf = nim.shift(ker_psf, (shift_x, shift_y))
+        
+            file_name = f"{com[0]}-{com[1]}"
+            file_new_path = os.path.join(directory_new_path, file_name)
             
-            file_new_path = os.path.join(directory_new_path, file)
             imaMan.save_exr_psf(ker_psf, file_new_path)
 
 
