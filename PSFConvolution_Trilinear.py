@@ -35,7 +35,7 @@ def load_psf_krnls(camera_path):
 
 
 @njit()
-def psf_convolution(rgb, res, depth, krnls_db):
+def psf_convolution(rgb, res, depth, krnls_db:list[tuple]):
     
     rgb_new = res
     krnl_size = 13
@@ -44,7 +44,8 @@ def psf_convolution(rgb, res, depth, krnls_db):
     image_width = len(rgb)
     image_height = len(rgb[0])
     
-    for i in prange(krnl_range, image_width - krnl_range):
+    for i in range(krnl_range, image_width - krnl_range):
+        print(i)
         for j in range(krnl_range, image_height - krnl_range):
             
             krnl = [0.0]*(krnl_size**2)
@@ -57,46 +58,115 @@ def psf_convolution(rgb, res, depth, krnls_db):
                                               
                     #SELECTING DEPTH   
                     dep = float(round(depth[i-krnl_range+h][j-krnl_range+k]*10)/10)
-                    chosen_dep_index = 0
+                    low_dep_index = 0
+                    high_dep_index = 0
                     
                     for dp_index in range(len(krnls_db)):
                         
                         if dp_index == len(krnls_db)-1:
-                            chosen_dep_index = len(krnls_db)-1
+                            high_dep_index = len(krnls_db)-1
+                            low_dep_index = high_dep_index-1
                             break
                         
                         if dep >= krnls_db[dp_index][0] and dep <= krnls_db[dp_index+1][0]:
                              
-                            diff1 = dep - krnls_db[dp_index][0]
-                            diff2 = krnls_db[dp_index+1][0] - dep
-                             
-                            if diff1 <= diff2:
-                                chosen_dep_index = dp_index
-                            else:
-                                chosen_dep_index = dp_index+1
-                            
+                            low_dep_index = dp_index
+                            high_dep_index = dp_index+1
                             break
                     
-                    pos_db = krnls_db[chosen_dep_index][1]
+                    low_pos_db = krnls_db[low_dep_index][1]
+                    high_pos_db = krnls_db[high_dep_index][1]
+                    depth_low = krnls_db[low_dep_index][0]
+                    depth_high = krnls_db[low_dep_index][0]
                     
-                    #SELECTED DEPTH
-                    #SELECTING POSITION
                     
-                    min_distance = sys.maxsize
-                    selected_krnl = pos_db[0][2]
+                    low_dist_pos_db:list[tuple] = []
+                    high_dist_pos_db:list[tuple] = []
                     
-                    for psf in pos_db:
-                        dist = math.sqrt((i-psf[0])**2 + (j-psf[1])**2)
-                        if dist < min_distance:
-                            min_distance = dist
-                            selected_krnl = psf[2]
-                    
+                    for elem in range(len(low_pos_db)):
+                        dist_low = math.sqrt((i-low_pos_db[elem][0])**2 + (j-low_pos_db[elem][1])**2)
+                        dist_high = math.sqrt((i-high_pos_db[elem][0])**2 + (j-high_pos_db[elem][1])**2)
+                        
+                        
+                        if elem == 0:
+                            low_dist_pos_db.append( (dist_low, low_pos_db[elem][2]) )
+                            high_dist_pos_db.append( (dist_high, low_pos_db[elem][2]) )
+                            
+                        elif elem < 4:
+                            done = False
+                            for count in range(elem):
+                                if dist_low < low_dist_pos_db[count][0]:
+                                    low_dist_pos_db.insert(0, (dist_low, low_pos_db[elem][2]))
+                                    done = True
+                                    break
+                            
+                            if not done:
+                                low_dist_pos_db.append((dist_low, low_pos_db[elem][2]))
+                                
+                            done = False
+                            for count in range(elem):
+                                if dist_high < high_dist_pos_db[count][0]:
+                                    high_dist_pos_db.insert(0, (dist_high, high_pos_db[elem][2]))
+                                    done = True
+                                    break
+                            
+                            if not done:
+                                high_dist_pos_db.append((dist_high, high_pos_db[elem][2]))
+                                
+                        else:
+                            for count in range(4):
+                                if dist_low < low_dist_pos_db[count][0]:
+                                    low_dist_pos_db.insert(0, (dist_low, low_pos_db[elem][2]))
+                                    break
+                            for count in range(4):
+                                if dist_high < high_dist_pos_db[count][0]:
+                                    high_dist_pos_db.insert(0, (dist_high, high_pos_db[elem][2]))
+                                    break
                     
                     #POSITION SELECTED
                     
-                    ijvalue = selected_krnl[h][k]
+                    #bilinear interpolation low
+                    
+                    low_ijvalue = 0
+                    dist_sum = 0
+                    
+                    for count in range(4):
+                        psf_dist = low_dist_pos_db[count][0]
+                        dist_sum += psf_dist
+                    
+                    for count in range(4):
+                        psf_dist = low_dist_pos_db[count][0]
+                        psf = low_dist_pos_db[count][1]
+                        
+                        w = psf_dist / dist_sum
+                        
+                        low_ijvalue += psf[h][k] * w
+                    
+                    #bilinear interpolation high
+                    
+                    high_ijvalue = 0
+                    dist_sum = 0
+                    
+                    for count in range(4):
+                        psf_dist = high_dist_pos_db[count][0]
+                        dist_sum += psf_dist
+                    
+                    for count in range(4):
+                        psf_dist = high_dist_pos_db[count][0]
+                        psf = high_dist_pos_db[count][1]
+                        
+                        w = psf_dist / dist_sum
+                        
+                        high_ijvalue += psf[h][k] * w
+                        
+                    #interpolation depth
+                    
+                    u = depth_high / (depth_high + depth_low)
+                    
+                    ijvalue = u * high_ijvalue  + (1-u) * low_ijvalue
+                    
                     krnl[h*krnl_size + k] = ijvalue
-                    kernelSum += ijvalue 
+                    kernelSum += ijvalue
              
             #NORMALIZATION
             for elem in range(len(krnl)):
@@ -142,9 +212,9 @@ def convolution_init(ker_size, export_type, image_file, camera_path):
     print("Convolution time is: ", str(conv_end_time-start_time)+"s")
     
     if export_type == '.exr':
-        imaMan.save_exr(rgb_res , 'ResImages/'+str(image_file)+'['+str(ker_size)+']A[5.0m - 100mm - f1].exr')
+        imaMan.save_exr(rgb_res , 'ResImages/'+str(image_file)+'['+str(ker_size)+'][5.0m - 100mm - f1].exr')
     elif export_type == '.png':
-        imaMan.save_srgb(rgb_res , 'ResImages/'+str(image_file)+'['+str(ker_size)+']A[5.0m - 100mm - f1].png')
+        imaMan.save_srgb(rgb_res , 'ResImages/'+str(image_file)+'['+str(ker_size)+'][5.0m - 100mm - f1].png')
     else:
         print("Save Error")
     
@@ -152,7 +222,7 @@ if __name__=='__main__':
     
     ker_size = 13
     export_type = '.png'
-    image_file = 'quads1024_100' #quads
+    image_file = 'bunnycentral1024_100'
     camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/PSFkernels/Petzval_krnls'
     
     convolution_init(ker_size, export_type, image_file, camera_path)

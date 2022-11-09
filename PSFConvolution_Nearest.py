@@ -44,6 +44,7 @@ def psf_convolution(rgb, res, depth, krnls_db):
     image_height = len(rgb[0])
     
     for i in prange(krnl_range, image_width - krnl_range):
+        print(i)
         for j in range(krnl_range, image_height - krnl_range):
             
             krnl = [0.0]*(krnl_size**2)
@@ -151,7 +152,7 @@ if __name__=='__main__':
     
     ker_size = 13
     export_type = '.png'
-    image_file = 'quads1024_100' #quads
+    image_file = 'tree1024_100'
     camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/PSFkernels/Petzval_krnls'
     
     convolution_init(ker_size, export_type, image_file, camera_path)
