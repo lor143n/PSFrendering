@@ -35,7 +35,7 @@ def load_psf_krnls(camera_path):
 
 
 @njit()
-def psf_convolution(rgb, res, depth, krnls_db:list[tuple]):
+def psf_convolution(rgb, res, depth, krnls_db:list[tuple], interpolation_count):
     
     rgb_new = res
     krnl_size = 13
@@ -90,9 +90,9 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple]):
                         
                         if elem == 0:
                             low_dist_pos_db.append( (dist_low, low_pos_db[elem][2]) )
-                            high_dist_pos_db.append( (dist_high, low_pos_db[elem][2]) )
+                            high_dist_pos_db.append( (dist_high, high_pos_db[elem][2]) )
                             
-                        elif elem < 4:
+                        elif elem < interpolation_count:
                             done = False
                             for count in range(elem):
                                 if dist_low < low_dist_pos_db[count][0]:
@@ -114,11 +114,11 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple]):
                                 high_dist_pos_db.append((dist_high, high_pos_db[elem][2]))
                                 
                         else:
-                            for count in range(4):
+                            for count in range(interpolation_count):
                                 if dist_low < low_dist_pos_db[count][0]:
                                     low_dist_pos_db.insert(0, (dist_low, low_pos_db[elem][2]))
                                     break
-                            for count in range(4):
+                            for count in range(interpolation_count):
                                 if dist_high < high_dist_pos_db[count][0]:
                                     high_dist_pos_db.insert(0, (dist_high, high_pos_db[elem][2]))
                                     break
@@ -128,34 +128,34 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple]):
                     #bilinear interpolation low
                     
                     low_ijvalue = 0
-                    dist_sum = 0
+                    inv_dist_sum = 0
                     
-                    for count in range(4):
+                    for count in range(interpolation_count):
                         psf_dist = low_dist_pos_db[count][0]
-                        dist_sum += psf_dist
+                        inv_dist_sum += 1 / psf_dist
                     
-                    for count in range(4):
+                    for count in range(interpolation_count):
                         psf_dist = low_dist_pos_db[count][0]
                         psf = low_dist_pos_db[count][1]
                         
-                        w = psf_dist / dist_sum
+                        w = (1/psf_dist) / inv_dist_sum
                         
                         low_ijvalue += psf[h][k] * w
                     
                     #bilinear interpolation high
                     
                     high_ijvalue = 0
-                    dist_sum = 0
+                    inv_dist_sum = 0
                     
-                    for count in range(4):
+                    for count in range(interpolation_count):
                         psf_dist = high_dist_pos_db[count][0]
-                        dist_sum += psf_dist
+                        inv_dist_sum += 1 / psf_dist
                     
-                    for count in range(4):
+                    for count in range(interpolation_count):
                         psf_dist = high_dist_pos_db[count][0]
                         psf = high_dist_pos_db[count][1]
                         
-                        w = psf_dist / dist_sum
+                        w = (1/psf_dist) / inv_dist_sum
                         
                         high_ijvalue += psf[h][k] * w
                         
@@ -179,7 +179,7 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple]):
                 for y in range(krnl_size):
                     rgb_new[i-krnl_range][j-krnl_range] += krnl[x*krnl_size+y] * rgb[i-krnl_range+x][j-krnl_range+y]
             
-                      
+
     return rgb_new
         
         
@@ -204,7 +204,7 @@ def convolution_init(ker_size, export_type, image_file, camera_path):
     rgb = np.pad(rgb, ((krnl_range, krnl_range), (krnl_range, krnl_range), (0, 0)), mode='symmetric')
     depth = np.pad(depth, ((krnl_range, krnl_range), (krnl_range, krnl_range)), mode='symmetric')
     
-    rgb_res = psf_convolution(rgb, rgb_res, depth, krnl_db)
+    rgb_res = psf_convolution(rgb, rgb_res, depth, krnl_db, 4)
     
     del krnl_db
     
@@ -212,9 +212,9 @@ def convolution_init(ker_size, export_type, image_file, camera_path):
     print("Convolution time is: ", str(conv_end_time-start_time)+"s")
     
     if export_type == '.exr':
-        imaMan.save_exr(rgb_res , 'ResImages/'+str(image_file)+'['+str(ker_size)+'][5.0m - 100mm - f1].exr')
+        imaMan.save_exr(rgb_res , 'ResImages/'+str(image_file)+'4['+str(ker_size)+'][5.0m - 100mm - f1].exr')
     elif export_type == '.png':
-        imaMan.save_srgb(rgb_res , 'ResImages/'+str(image_file)+'['+str(ker_size)+'][5.0m - 100mm - f1].png')
+        imaMan.save_srgb(rgb_res , 'ResImages/'+str(image_file)+'4['+str(ker_size)+'][5.0m - 100mm - f1].png')
     else:
         print("Save Error")
     
@@ -222,7 +222,7 @@ if __name__=='__main__':
     
     ker_size = 13
     export_type = '.png'
-    image_file = 'bunnycentral1024_100'
+    image_file = 'tree1024_100'
     camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/PSFkernels/Petzval_krnls'
     
     convolution_init(ker_size, export_type, image_file, camera_path)
