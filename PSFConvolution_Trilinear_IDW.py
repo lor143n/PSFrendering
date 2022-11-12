@@ -34,7 +34,7 @@ def load_psf_krnls(camera_path):
   
 
 
-@njit()
+@njit(parallel=True)
 def psf_convolution(rgb, res, depth, krnls_db:list[tuple], interpolation_count):
     
     rgb_new = res
@@ -44,20 +44,20 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple], interpolation_count):
     image_width = len(rgb)
     image_height = len(rgb[0])
     
-    for i in range(krnl_range, image_width - krnl_range):
-        print(i)
+    for i in prange(krnl_range, image_width - krnl_range):
         for j in range(krnl_range, image_height - krnl_range):
             
             krnl = [0.0]*(krnl_size**2)
             kernelSum = 0
     
-            # KERNEL MAKING
-    
+            #KERNEL GENERATION
             for h in range(krnl_size):
                 for k in range(krnl_size):
                                               
-                    #SELECTING DEPTH   
-                    dep = float(round(depth[i-krnl_range+h][j-krnl_range+k]*10)/10)
+                    #DEPTH SELECTION
+                    '''START''' 
+                      
+                    dep = depth[i-krnl_range+h][j-krnl_range+k]
                     low_dep_index = 0
                     high_dep_index = 0
                     
@@ -79,6 +79,10 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple], interpolation_count):
                     depth_low = krnls_db[low_dep_index][0]
                     depth_high = krnls_db[low_dep_index][0]
                     
+                    '''END'''
+                    
+                    #POSITION SELECTION - FOUR MINIMUM SEARCH
+                    '''START'''
                     
                     low_dist_pos_db:list[tuple] = []
                     high_dist_pos_db:list[tuple] = []
@@ -122,10 +126,13 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple], interpolation_count):
                                 if dist_high < high_dist_pos_db[count][0]:
                                     high_dist_pos_db.insert(0, (dist_high, high_pos_db[elem][2]))
                                     break
+                                
+                    '''END'''
                     
-                    #POSITION SELECTED
+                    #POSITION INTERPOLATION - IDW 
+                    '''START'''
                     
-                    #bilinear interpolation low
+                    #1-depth depth 2D interpolation
                     
                     low_ijvalue = 0
                     inv_dist_sum = 0
@@ -142,7 +149,8 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple], interpolation_count):
                         
                         low_ijvalue += psf[h][k] * w
                     
-                    #bilinear interpolation high
+                    
+                    #2-depth 2D interpolation
                     
                     high_ijvalue = 0
                     inv_dist_sum = 0
@@ -159,7 +167,7 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple], interpolation_count):
                         
                         high_ijvalue += psf[h][k] * w
                         
-                    #interpolation depth
+                    #depth interpolation
                     
                     u = depth_high / (depth_high + depth_low)
                     
@@ -167,15 +175,15 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple], interpolation_count):
                     
                     krnl[h*krnl_size + k] = ijvalue
                     kernelSum += ijvalue
+                    
+                    '''END'''
              
-            #NORMALIZATION
+            #KERNEL NORMALIZATION
             for elem in range(len(krnl)):
                 krnl[elem] /= kernelSum
-                
-            # KERNEL MAKING ENDS
             
-            #PIXEL COLVOLVE
-            for x in prange(krnl_size):
+            #PIXEL CONVOLUTION
+            for x in range(krnl_size):
                 for y in range(krnl_size):
                     rgb_new[i-krnl_range][j-krnl_range] += krnl[x*krnl_size+y] * rgb[i-krnl_range+x][j-krnl_range+y]
             
@@ -204,7 +212,9 @@ def convolution_init(ker_size, export_type, image_file, camera_path):
     rgb = np.pad(rgb, ((krnl_range, krnl_range), (krnl_range, krnl_range), (0, 0)), mode='symmetric')
     depth = np.pad(depth, ((krnl_range, krnl_range), (krnl_range, krnl_range)), mode='symmetric')
     
-    rgb_res = psf_convolution(rgb, rgb_res, depth, krnl_db, 4)
+    interpolation_count = 4
+    
+    rgb_res = psf_convolution(rgb, rgb_res, depth, krnl_db, interpolation_count)
     
     del krnl_db
     
@@ -214,7 +224,7 @@ def convolution_init(ker_size, export_type, image_file, camera_path):
     if export_type == '.exr':
         imaMan.save_exr(rgb_res , 'ResImages/'+str(image_file)+'4['+str(ker_size)+'][5.0m - 100mm - f1].exr')
     elif export_type == '.png':
-        imaMan.save_srgb(rgb_res , 'ResImages/'+str(image_file)+'4['+str(ker_size)+'][5.0m - 100mm - f1].png')
+        imaMan.save_srgb(rgb_res , f'ResImages/{image_file}[{ker_size}comp3][5.0m - 100mm - f1][IDW - {interpolation_count}].png')
     else:
         print("Save Error")
     
