@@ -3,9 +3,11 @@ from numba import njit, prange, float64
 import numpy as np
 from scipy import ndimage as nim
 import imagesManager as imaMan
+import click
 import time
 import os
 import sys
+import gc
 
 
 
@@ -15,7 +17,7 @@ def load_psf_krnls(camera_path):
     for directory in os.listdir(camera_path):
         dir_clean = directory.split('-')
         dir_depth = float(dir_clean[1].split('m')[0])        
-        print(dir_depth)
+
         psf_dict.append( (dir_depth, []) )
         
         dir_path = os.path.join(camera_path, directory)
@@ -191,11 +193,20 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple], interpolation_count):
     return rgb_new
         
         
-        
-def convolution_init(ker_size, export_type, image_file, camera_path):
-    print('Algorithm start')
+@click.command()
+@click.argument('image_file')
+def convolution_init(image_file):
     
-    (rgb, depth) = imaMan.load_rgbd('TestImages/'+str(image_file)+'.exr')
+    
+    
+    ker_size = 13
+    export_type = '.exr'
+    camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/PSFkernels/Petzval_krnls'
+    
+    print(image_file)
+    
+    #(rgb, depth) = imaMan.load_rgbd('TestImages/'+str(image_file)+'.exr')
+    (rgb, depth) = imaMan.load_rgbd(f'anim/{image_file}')
     
     start_time = time.time()
     
@@ -203,7 +214,6 @@ def convolution_init(ker_size, export_type, image_file, camera_path):
     
     db_end_time = time.time()
     print("Database construction time is: ", str(db_end_time-start_time)+"s")
-    print(len(krnl_db))
     start_time = time.time()
     
     krnl_range = int((ker_size - 1) / 2)
@@ -224,15 +234,15 @@ def convolution_init(ker_size, export_type, image_file, camera_path):
     if export_type == '.exr':
         imaMan.save_exr(rgb_res , 'ResImages/'+str(image_file)+'4['+str(ker_size)+'][5.0m - 100mm - f1].exr')
     elif export_type == '.png':
-        imaMan.save_srgb(rgb_res , f'ResImages/{image_file}[{ker_size}comp3][5.0m - 100mm - f1][IDW - {interpolation_count}].png')
+        #imaMan.save_srgb(rgb_res , f'ResImages/{image_file}[{ker_size}comp3][5.0m - 100mm - f1][IDW - {interpolation_count}].png')
+        imaMan.save_srgb(rgb_res , f'animRes/{image_file}.png')
     else:
         print("Save Error")
-    
+        
+
 if __name__=='__main__':
     
-    ker_size = 13
-    export_type = '.png'
-    image_file = 'tree1024_100'
-    camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/PSFkernels/Petzval_krnls'
+    convolution_init()
+
     
-    convolution_init(ker_size, export_type, image_file, camera_path)
+    
