@@ -197,21 +197,18 @@ def psf_convolution(rgb, res, depth, krnls_db:list[tuple], interpolation_count):
 @click.argument('image_file')
 def convolution_init(image_file):
     
-    
-    
     ker_size = 13
-    export_type = '.exr'
+    export_type = '.png'
     camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/PSFkernels/Petzval_krnls'
     
     print(image_file)
     
-    #(rgb, depth) = imaMan.load_rgbd('TestImages/'+str(image_file)+'.exr')
-    (rgb, depth) = imaMan.load_rgbd(f'anim/{image_file}')
+    (rgb, depth) = imaMan.load_rgbd('TestImages/test/'+str(image_file))
     
     start_time = time.time()
     
     krnl_db = load_psf_krnls(camera_path)
-    
+
     db_end_time = time.time()
     print("Database construction time is: ", str(db_end_time-start_time)+"s")
     start_time = time.time()
@@ -232,10 +229,9 @@ def convolution_init(image_file):
     print("Convolution time is: ", str(conv_end_time-start_time)+"s")
     
     if export_type == '.exr':
-        imaMan.save_exr(rgb_res , 'ResImages/'+str(image_file)+'4['+str(ker_size)+'][5.0m - 100mm - f1].exr')
+        imaMan.save_exr(rgb_res , f'animRes/{image_file}.exr')
     elif export_type == '.png':
-        #imaMan.save_srgb(rgb_res , f'ResImages/{image_file}[{ker_size}comp3][5.0m - 100mm - f1][IDW - {interpolation_count}].png')
-        imaMan.save_srgb(rgb_res , f'animRes/{image_file}.png')
+        imaMan.save_srgb(rgb_res , f'ResImages/{image_file}[{ker_size}comp3][5.0m - 100mm - f1][IDW - {interpolation_count}].png')
     else:
         print("Save Error")
         
