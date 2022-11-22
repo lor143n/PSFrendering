@@ -117,7 +117,7 @@ def psf_convolution(rgb, res, depth, krnls_db):
 def convolution_init(ker_size, export_type, image_file, camera_path):
     print('Algorithm start')
     
-    (rgb, depth) = imaMan.load_rgbd('TestImages/'+str(image_file)+'.exr')
+    (rgb, depth) = imaMan.load_rgbd('test/'+str(image_file)+'.exr')
     
     start_time = time.time()
     
@@ -142,9 +142,9 @@ def convolution_init(ker_size, export_type, image_file, camera_path):
     print("Convolution time is: ", str(conv_end_time-start_time)+"s")
     
     if export_type == '.exr':
-        imaMan.save_exr(rgb_res , 'ResImages/'+str(image_file)+'['+str(ker_size)+']A[5.0m - 100mm - f1].exr')
+        imaMan.save_exr(rgb_res , 'results/'+str(image_file)+'['+str(ker_size)+']A[5.0m - 100mm - f1].exr')
     elif export_type == '.png':
-        imaMan.save_srgb(rgb_res , 'ResImages/'+str(image_file)+'['+str(ker_size)+']A[5.0m - 100mm - f1].png')
+        imaMan.save_srgb(rgb_res , 'results/'+str(image_file)+'['+str(ker_size)+']A[5.0m - 100mm - f1].png')
     else:
         print("Save Error")
     
@@ -153,6 +153,6 @@ if __name__=='__main__':
     ker_size = 13
     export_type = '.png'
     image_file = 'tree1024_100'
-    camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/PSFkernels/Petzval_krnls'
+    camera_path = '/home/lor3n/Documents/GitHub/PFSrendering/PSF_kernels/canon-zoom_krnls13'
     
     convolution_init(ker_size, export_type, image_file, camera_path)
