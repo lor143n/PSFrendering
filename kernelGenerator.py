@@ -9,12 +9,12 @@ import os
 @click.argument('camera_name', default='canon-zoom')
 @click.argument('krnl_size', default=13)
 @click.argument('focus', default=5.0)
-@click.argument('aperture', default=1)
+@click.argument('aperture', default=1.4)
 def kernelFilesGenerator(camera_name, krnl_size, focus, aperture):
     
     camera_path = f'/home/lor3n/Documents/GitHub/PFSrendering/PSF_lens/{camera_name}/focus-{focus}0m/aperture-f{aperture}'
     
-    camera_new_path = f'/home/lor3n/Documents/GitHub/PFSrendering/PSF_kernels/{camera_name}_krnls{krnl_size}'
+    camera_new_path = f'/home/lor3n/Documents/GitHub/PFSrendering/PSF_kernels/{camera_name}_{krnl_size}_{focus}_{aperture}'
     os.mkdir(camera_new_path, mode=0o777)
     
     krnl_range = int((krnl_size - 1) / 2)

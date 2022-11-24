@@ -198,12 +198,14 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
 @click.argument('camera_type', default='canon-zoom')
 @click.argument('interpolation_steps', default=4)
 @click.argument('krnl_size', default=13)
-def convolution_init(image_file, camera_type, export_type, krnl_size, interpolation_steps):
+@click.argument('focus', default=5.0)
+@click.argument('aperture', default=1.4)
+def convolution_init(image_file, camera_type, export_type, krnl_size, interpolation_steps, focus, aperture):
     
     # Loading image
     start_time = time.time()
     
-    camera_path = f'/home/lor3n/Documents/GitHub/PFSrendering/PSF_kernels/{camera_type}_krnls{krnl_size}'
+    camera_path = f'/home/lor3n/Documents/GitHub/PFSrendering/PSF_kernels/{camera_type}_{krnl_size}_{focus}_{aperture}'
     
     (rgb, depth) = imaMan.load_rgbd('test/'+str(image_file))
     
@@ -237,9 +239,9 @@ def convolution_init(image_file, camera_type, export_type, krnl_size, interpolat
     
     #Exporting
     if export_type == '.exr':
-        imaMan.save_exr(rgb_res , f'results/{image_file}[{krnl_size}comp3][5.0m - 100mm - f1][IDW - {interpolation_steps}].exr')
+        imaMan.save_exr(rgb_res , f'results/{image_file}_IDW_{camera_type}_{krnl_size}_{focus}_{aperture}_{interpolation_steps}.exr')
     elif export_type == '.png':
-        imaMan.save_srgb(rgb_res , f'results/{image_file}[{krnl_size}comp3][5.0m - 100mm - f1][IDW - {interpolation_steps}].png')
+        imaMan.save_srgb(rgb_res , f'results/{image_file}_IDW_{camera_type}_{krnl_size}_{focus}_{aperture}_{interpolation_steps}.png')
     else:
         print("Save Error")
         
