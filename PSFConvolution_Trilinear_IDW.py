@@ -56,10 +56,10 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
                                               
                     #DEPTH SELECTION
                     '''START''' 
-                      
-                    dep = depth[i-krnl_range+h][j-krnl_range+k]
+                    
                     low_dep_index = 0
                     high_dep_index = 0
+                    dep = depth[i-krnl_range+h][j-krnl_range+k]
                     
                     for dp_index in range(len(krnls_db)):
                         
@@ -138,37 +138,46 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
                     low_ijvalue = 0
                     inv_dist_sum = 0
                     
-                    for count in range(interpolation_count):
-                        psf_dist = low_dist_pos_db[count][0]
-                        inv_dist_sum += 1 / psf_dist
+                    if len(low_dist_pos_db) < interpolation_count and len(low_dist_pos_db) != 1:
+                        interpolation_count = len(low_dist_pos_db)
                     
-                    for count in range(interpolation_count):
-                        psf_dist = low_dist_pos_db[count][0]
-                        psf = low_dist_pos_db[count][1]
-                        
-                        w = (1/psf_dist) / inv_dist_sum
-                        
-                        low_ijvalue += psf[h][k] * w
+                    if interpolation_count <= len(low_dist_pos_db) :
+                        for count in range(interpolation_count):
+                            psf_dist = low_dist_pos_db[count][0]
+                            inv_dist_sum += 1 / psf_dist
                     
+                        for count in range(interpolation_count):
+                            psf_dist = low_dist_pos_db[count][0]
+                            psf = low_dist_pos_db[count][1]
+                        
+                            w = (1/psf_dist) / inv_dist_sum
+                        
+                            low_ijvalue += psf[h][k] * w
+                    else:
+                        low_ijvalue = low_dist_pos_db[0][1][h][k]
                     
                     #2-depth 2D interpolation
                     
                     high_ijvalue = 0
                     inv_dist_sum = 0
                     
-                    _debug = 0
+                    if len(high_dist_pos_db) < interpolation_count and len(high_dist_pos_db) != 1:
+                        interpolation_count = len(high_dist_pos_db)
                     
-                    for count in range(interpolation_count):
-                        psf_dist = high_dist_pos_db[count][0]
-                        inv_dist_sum += 1 / psf_dist
+                    if interpolation_count <= len(high_dist_pos_db):
+                        for count in range(interpolation_count):
+                            psf_dist = high_dist_pos_db[count][0]
+                            inv_dist_sum += 1 / psf_dist
                     
-                    for count in range(interpolation_count):
-                        psf_dist = high_dist_pos_db[count][0]
-                        psf = high_dist_pos_db[count][1]
+                        for count in range(interpolation_count):
+                            psf_dist = high_dist_pos_db[count][0]
+                            psf = high_dist_pos_db[count][1]
                         
-                        w = (1/psf_dist) / inv_dist_sum
+                            w = (1/psf_dist) / inv_dist_sum
                         
-                        high_ijvalue += psf[h][k] * w
+                            high_ijvalue += psf[h][k] * w
+                    else:
+                        high_ijvalue = high_dist_pos_db[0][1][h][k]
                         
                     #depth interpolation
                     
@@ -178,7 +187,6 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
                     
                     krnl[h*krnl_size + k] = ijvalue
                     kernelSum += ijvalue
-                    
              
             #KERNEL NORMALIZATION
             for elem in range(len(krnl)):
@@ -193,13 +201,13 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
         
 
 @click.command()
-@click.argument('image_file', default='bunnycentral1024_100.exr')
-@click.argument('export_type', default='.png')
+@click.argument('image_file', default='bunnycentral1024_100')
 @click.argument('camera_type', default='canon-zoom')
+@click.argument('aperture', default=1.4)
+@click.argument('focus', default=5.0)
+@click.argument('export_type', default='.png')
 @click.argument('interpolation_steps', default=4)
 @click.argument('krnl_size', default=13)
-@click.argument('focus', default=5.0)
-@click.argument('aperture', default=1.4)
 def convolution_init(image_file, camera_type, export_type, krnl_size, interpolation_steps, focus, aperture):
     
     # Loading image
@@ -207,7 +215,7 @@ def convolution_init(image_file, camera_type, export_type, krnl_size, interpolat
     
     camera_path = f'/home/lor3n/Documents/GitHub/PFSrendering/PSF_kernels/{camera_type}_{krnl_size}_{focus}_{aperture}'
     
-    (rgb, depth) = imaMan.load_rgbd('test/'+str(image_file))
+    (rgb, depth) = imaMan.load_rgbd(f'test/{image_file}_{camera_type}.exr')
     
     db_end_time = time.time()
     print("Image loading took ", str(db_end_time-start_time)+"s")

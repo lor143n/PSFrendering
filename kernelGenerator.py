@@ -47,10 +47,12 @@ def kernelFilesGenerator(camera_name, krnl_size, focus, aperture):
             
             ker_psf = nim.shift(ker_psf, (-shift_x, -shift_y))
             
-            
-            for i in range(krnl_size):
-                for j in range(krnl_size):
-                    ker_psf[i][j] = abs(ker_psf[i][j])
+            try:
+                for i in range(len(ker_psf)):
+                    for j in range(len(ker_psf[i])):
+                        ker_psf[i][j] = abs(ker_psf[i][j])
+            except:
+                print(f"{file} - {dir_depth}")
         
             file_name = f"{com[0]}-{com[1]}"
             file_new_path = os.path.join(directory_new_path, file_name)
