@@ -1,4 +1,3 @@
-
 from scipy import ndimage as nim
 import imagesManager as imaMan
 import numpy as np

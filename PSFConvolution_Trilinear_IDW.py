@@ -36,7 +36,8 @@ def load_psf_krnls(camera_path):
 @njit(parallel=True)
 def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
     
-    rgb_new = res
+    #rgb_new = res
+    rgb_new = np.zeros((1024, 769))
     krnl_size = 13
     krnl_range = int((krnl_size - 1) / 2)
     
@@ -44,8 +45,9 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
     image_width = len(rgb)
     image_height = len(rgb[0])
     
-    for i in prange(krnl_range, image_width - krnl_range):
+    for i in range(krnl_range, image_width - krnl_range):
         for j in range(krnl_range, image_height - krnl_range):
+            print(j)
             krnl = [0.0]*(krnl_size**2)
             kernelSum = 0
             
@@ -187,6 +189,8 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
                     
                     krnl[h*krnl_size + k] = ijvalue
                     kernelSum += ijvalue
+   
+             
              
             #KERNEL NORMALIZATION
             for elem in range(len(krnl)):
@@ -196,12 +200,13 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
             for x in range(krnl_size):
                 for y in range(krnl_size):
                     rgb_new[i-krnl_range][j-krnl_range] += krnl[x*krnl_size+y] * rgb[i-krnl_range+x][j-krnl_range+y]
+                    
     
     return rgb_new
         
 
 @click.command()
-@click.argument('image_file', default='bunnycentral1024_100')
+@click.argument('image_file', default='rocs')
 @click.argument('camera_type', default='canon-zoom')
 @click.argument('aperture', default=1.4)
 @click.argument('focus', default=5.0)
@@ -213,7 +218,7 @@ def convolution_init(image_file, camera_type, export_type, krnl_size, interpolat
     # Loading image
     start_time = time.time()
     
-    camera_path = f'/home/lor3n/Documents/GitHub/PFSrendering/PSF_kernels/{camera_type}_{krnl_size}_{focus}_{aperture}'
+    camera_path = f'PSF_kernels/{camera_type}_{krnl_size}_{focus}_{aperture}'
     
     (rgb, depth) = imaMan.load_rgbd(f'test/{image_file}_{camera_type}.exr')
     
