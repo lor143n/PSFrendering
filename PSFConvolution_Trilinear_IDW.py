@@ -33,7 +33,7 @@ def load_psf_krnls(camera_path):
   
 
 
-@njit(parallel=True)
+#@njit(parallel=True)
 def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
     
     #rgb_new = res
@@ -46,6 +46,7 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
     image_height = len(rgb[0])
     
     for i in range(krnl_range, image_width - krnl_range):
+        print(i)
         for j in range(krnl_range, image_height - krnl_range):
             print(j)
             krnl = [0.0]*(krnl_size**2)
