@@ -33,11 +33,11 @@ def load_psf_krnls(camera_path):
   
 
 
-#@njit(parallel=True)
+@njit()
 def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
     
-    #rgb_new = res
-    rgb_new = np.zeros((1024, 769))
+    rgb_new = res
+    #rgb_new = np.zeros((1024, 768, 3))
     krnl_size = 13
     krnl_range = int((krnl_size - 1) / 2)
     
@@ -48,7 +48,6 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
     for i in range(krnl_range, image_width - krnl_range):
         print(i)
         for j in range(krnl_range, image_height - krnl_range):
-            print(j)
             krnl = [0.0]*(krnl_size**2)
             kernelSum = 0
             
@@ -200,7 +199,10 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
             #PIXEL CONVOLUTION
             for x in range(krnl_size):
                 for y in range(krnl_size):
-                    rgb_new[i-krnl_range][j-krnl_range] += krnl[x*krnl_size+y] * rgb[i-krnl_range+x][j-krnl_range+y]
+                           
+                    rgb_value = rgb[i-krnl_range+x][j-krnl_range+y]
+                    rgb_new[i-krnl_range][j-krnl_range] += krnl[x*krnl_size+y] * rgb_value
+
                     
     
     return rgb_new
