@@ -1,1 +1,0 @@
-for i in {60..12}; do python3 PSFConvolution_Trilinear_IDW.py $i.exr; done

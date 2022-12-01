@@ -58,12 +58,14 @@ def save_exr(rgb, outpath):
     exr.close()
     
 def save_exr_psf(depth, outpath):
+
     height, width = depth.shape
+
     header = OpenEXR.Header(width, height)
     header['channels'] = {'Y': Channel(PixelType(OpenEXR.FLOAT))}
-	
     exr = OpenEXR.OutputFile(outpath, header)
     exr.writePixels({'Y': depth.tobytes()})
+
     exr.close()
 
   

@@ -33,20 +33,20 @@ def load_psf_krnls(camera_path):
   
 
 
-@njit()
-def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
+@njit(parallel = True)
+def psf_convolution(rgb, depth, krnl_size, krnls_db, interpolation_count):
     
-    rgb_new = res
-    #rgb_new = np.zeros((1024, 768, 3))
-    krnl_size = 13
+    height = len(rgb)-krnl_size+1
+    width = len(rgb[0])-krnl_size+1
+    
+    rgb_new = np.zeros((height, width, 3))
     krnl_range = int((krnl_size - 1) / 2)
-    
     
     image_width = len(rgb)
     image_height = len(rgb[0])
     
-    for i in range(krnl_range, image_width - krnl_range):
-        print(i)
+    for i in prange(krnl_range, image_width - krnl_range):
+        #print(i)
         for j in range(krnl_range, image_height - krnl_range):
             krnl = [0.0]*(krnl_size**2)
             kernelSum = 0
@@ -88,16 +88,12 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
                     '''START'''
                     
                     low_dist_pos_db = []
-                    high_dist_pos_db = []
                 
                     for elem in range(len(low_pos_db)):
                         dist_low = math.sqrt((i-low_pos_db[elem][0])**2 + (j-low_pos_db[elem][1])**2)
-                        dist_high = math.sqrt((i-high_pos_db[elem][0])**2 + (j-high_pos_db[elem][1])**2)
-                        
                         
                         if elem == 0:
                             low_dist_pos_db.append( (dist_low, low_pos_db[elem][2]) )
-                            high_dist_pos_db.append( (dist_high, high_pos_db[elem][2]) )
                             
                         elif elem < interpolation_count:
                             done = False
@@ -110,6 +106,21 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
                             if not done:
                                 low_dist_pos_db.append((dist_low, low_pos_db[elem][2]))
                                 
+                        else:
+                            for count in range(interpolation_count):
+                                if dist_low < low_dist_pos_db[count][0]:
+                                    low_dist_pos_db.insert(0, (dist_low, low_pos_db[elem][2]))
+                                    break
+                    
+                    high_dist_pos_db = []
+                    
+                    for elem in range(len(high_pos_db)):
+                        dist_high = math.sqrt((i-high_pos_db[elem][0])**2 + (j-high_pos_db[elem][1])**2)
+                        
+                        if elem == 0:
+                            high_dist_pos_db.append( (dist_high, high_pos_db[elem][2]) )
+                            
+                        elif elem < interpolation_count:
                             done = False
                             for count in range(elem):
                                 if dist_high < high_dist_pos_db[count][0]:
@@ -122,14 +133,9 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
                                 
                         else:
                             for count in range(interpolation_count):
-                                if dist_low < low_dist_pos_db[count][0]:
-                                    low_dist_pos_db.insert(0, (dist_low, low_pos_db[elem][2]))
-                                    break
-                            for count in range(interpolation_count):
                                 if dist_high < high_dist_pos_db[count][0]:
                                     high_dist_pos_db.insert(0, (dist_high, high_pos_db[elem][2]))
                                     break
-                                
                     '''END'''
                     
                     #POSITION INTERPOLATION - IDW 
@@ -209,7 +215,7 @@ def psf_convolution(rgb, res, depth, krnls_db, interpolation_count):
         
 
 @click.command()
-@click.argument('image_file', default='rocs')
+@click.argument('image_file', default='rocks')
 @click.argument('camera_type', default='canon-zoom')
 @click.argument('aperture', default=1.4)
 @click.argument('focus', default=5.0)
@@ -239,13 +245,12 @@ def convolution_init(image_file, camera_type, export_type, krnl_size, interpolat
     #Convolution
     start_time = time.time()
     
-    rgb_result = rgb*0
     krnl_range = int((krnl_size - 1) / 2)
     
     rgb = np.pad(rgb, ((krnl_range, krnl_range), (krnl_range, krnl_range), (0, 0)), mode='symmetric')
     depth = np.pad(depth, ((krnl_range, krnl_range), (krnl_range, krnl_range)), mode='symmetric')
     
-    rgb_res = psf_convolution(rgb, rgb_result, depth, krnl_db, interpolation_steps)
+    rgb_res = psf_convolution(rgb, depth, krnl_size, krnl_db, interpolation_steps)
     
     del krnl_db
     
