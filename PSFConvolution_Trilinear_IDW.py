@@ -1,5 +1,4 @@
 from numba import njit, prange
-from numba.typed import List
 import imagesManager as imaMan
 import numpy as np
 import math

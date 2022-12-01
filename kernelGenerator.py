@@ -1,6 +1,7 @@
 from scipy import ndimage as nim
 import imagesManager as imaMan
 import numpy as np
+import decimal
 import click
 import os
 
@@ -11,9 +12,9 @@ import os
 @click.argument('aperture', default=1.4)
 def kernelFilesGenerator(camera_name, krnl_size, focus, aperture):
     
-    camera_path = f'/home/lor3n/Documents/GitHub/PFSrendering/PSF_lens/{camera_name}/focus-{focus}0m/aperture-f{aperture}'
+    camera_path = f'/home/lor3n/Documents/GitHub/PSFrendering/PSF_lens/{camera_name}/focus-{focus}0m/aperture-f{aperture}'
     
-    camera_new_path = f'/home/lor3n/Documents/GitHub/PFSrendering/PSF_kernels/{camera_name}_{krnl_size}_{focus}_{aperture}'
+    camera_new_path = f'/home/lor3n/Documents/GitHub/PSFrendering/PSF_kernels/{camera_name}_{krnl_size}_{focus}_{aperture}'
     os.mkdir(camera_new_path, mode=0o777)
     
     krnl_range = int((krnl_size - 1) / 2)
@@ -51,7 +52,12 @@ def kernelFilesGenerator(camera_name, krnl_size, focus, aperture):
                 for j in range(len(ker_psf[i])):
                     ker_psf[i][j] = abs(ker_psf[i][j])
         
-            file_name = f"{com[0]}-{com[1]}"
+            ctx = decimal.Context()
+            ctx.prec = 20
+            c0 = ctx.create_decimal(repr(com[0]))
+            c1 = ctx.create_decimal(repr(com[1]))
+        
+            file_name = f"{c0}-{c1}"
             file_new_path = os.path.join(directory_new_path, file_name)
             
             
