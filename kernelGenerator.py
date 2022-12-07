@@ -12,7 +12,7 @@ import os
 @click.argument('aperture', default=1.4)
 def kernelFilesGenerator(camera_name, krnl_size, focus, aperture):
     
-    camera_path = f'/home/lor3n/Documents/GitHub/PSFrendering/PSF_lens/{camera_name}/focus-{focus}0m/aperture-f{aperture}'
+    camera_path = f'/home/lor3n/Documents/psf_gen/out/{camera_name}/focus-{focus}0m/aperture-f{aperture}'
     
     camera_new_path = f'/home/lor3n/Documents/GitHub/PSFrendering/PSF_kernels/{camera_name}_{krnl_size}_{focus}_{aperture}'
     os.mkdir(camera_new_path, mode=0o777)
