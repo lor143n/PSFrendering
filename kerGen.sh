@@ -1,9 +1,0 @@
-python3 kernelGenerator.py human-eye 13 5.0 4
-python3 kernelGenerator.py human-eye 13 5.0 8
-python3 kernelGenerator.py human-eye 13 5.0 11
-python3 kernelGenerator.py canon-zoom 13 5.0 1.4
-python3 kernelGenerator.py canon-zoom 13 5.0 5.6
-python3 kernelGenerator.py canon-zoom 13 5.0 11
-python3 kernelGenerator.py petzval 13 5.0 1.4
-python3 kernelGenerator.py petzval 13 5.0 5.6
-python3 kernelGenerator.py petzval 13 5.0 11
