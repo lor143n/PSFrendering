@@ -220,7 +220,7 @@ def psf_convolution(rgb, depth, krnl_size, krnls_db, interpolation_count):
 @click.argument('focus', default=5.0)
 @click.argument('export_type', default='.png')
 @click.argument('interpolation_steps', default=4)
-@click.argument('krnl_size', default=13)
+@click.argument('krnl_size', default=15)
 def convolution_init(image_file, camera_type, export_type, krnl_size, interpolation_steps, focus, aperture):
     
     # Loading image

@@ -1,5 +1,5 @@
 python3 PSFConvolution_Trilinear_IDW.py rocks human-eye 4.0
-python3 PSFConvolution_Trilinear_IDW.py rocks human-eye 8
+python3 PSFConvolution_Trilinear_IDW.py rocks human-eye 8.0
 python3 PSFConvolution_Trilinear_IDW.py rocks human-eye 11
 python3 PSFConvolution_Trilinear_IDW.py rocks canon-zoom 1.4
 python3 PSFConvolution_Trilinear_IDW.py rocks canon-zoom 5.6
@@ -14,8 +14,8 @@ python3 PSFConvolution_Trilinear_IDW.py rocks double-gauss 1.4
 python3 PSFConvolution_Trilinear_IDW.py rocks double-gauss 5.6
 python3 PSFConvolution_Trilinear_IDW.py rocks double-gauss 11
 python3 PSFConvolution_Trilinear_IDW.py rocks kreitzer-tele 1.4
-python3 PSFConvolution_Trilinear_IDW.py rocks kreitzer-tele 2.8
 python3 PSFConvolution_Trilinear_IDW.py rocks kreitzer-tele 4.0
+python3 PSFConvolution_Trilinear_IDW.py rocks kreitzer-tele 8.0
 
 python3 PSFConvolution_Trilinear_IDW.py field human-eye 4.0
 python3 PSFConvolution_Trilinear_IDW.py field human-eye 8
