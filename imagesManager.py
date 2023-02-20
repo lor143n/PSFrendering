@@ -68,6 +68,9 @@ def save_exr_psf(depth, outpath):
 
     exr.close()
 
+
+#DEPRECATED CODE
+
   
 def gaussian_kernel(size, std):
     '''Returns a 2D Gaussian kernel array.'''
@@ -75,9 +78,6 @@ def gaussian_kernel(size, std):
     kernel2d = np.outer(kernel1d, kernel1d)
     return kernel2d / np.sum(kernel2d)
 
-
-
-#DEPRECATED CODE
 
 
 def psf_db(krnl_size, psf_dim, img_width, camera_path):

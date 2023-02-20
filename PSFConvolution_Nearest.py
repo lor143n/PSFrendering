@@ -147,6 +147,8 @@ def convolution_init(ker_size, export_type, image_file, camera_path):
         imaMan.save_srgb(rgb_res , 'results/'+str(image_file)+'['+str(ker_size)+']A[5.0m - 100mm - f1].png')
     else:
         print("Save Error")
+        
+        
     
 if __name__=='__main__':
     
