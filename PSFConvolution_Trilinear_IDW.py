@@ -68,9 +68,13 @@ def psf_convolution(rgb, depth, krnl_size, krnls_db, interpolation_count):
                             high_dep_index = len(krnls_db)-1
                             low_dep_index = high_dep_index-1
                             break
+                            
+                        if dp_index == 0 and dep < krnls_db[dp_index][0]:
+                            low_dep_index = dp_index
+                            high_dep_index = dp_index+1
+                            break;
                         
                         if dep >= krnls_db[dp_index][0] and dep <= krnls_db[dp_index+1][0]:
-                             
                             low_dep_index = dp_index
                             high_dep_index = dp_index+1
                             break
@@ -220,7 +224,7 @@ def psf_convolution(rgb, depth, krnl_size, krnls_db, interpolation_count):
 @click.argument('focus', default=5.0)
 @click.argument('export_type', default='.png')
 @click.argument('interpolation_steps', default=4)
-@click.argument('krnl_size', default=30)
+@click.argument('krnl_size', default=21)
 def convolution_init(image_file, camera_type, export_type, krnl_size, interpolation_steps, focus, aperture):
     
     # Loading image
