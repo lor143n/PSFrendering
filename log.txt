@@ -1,92 +1,72 @@
-Image loading took  0.13068246841430664s
-Lens data loading took  0.18300938606262207s
-Convolution time is:  395.1256124973297s
+Image loading took  0.11769914627075195s
+Lens data loading took  0.13317370414733887s
+Convolution time is:  374.2292449474335s
 Done!
-Image loading took  0.11374449729919434s
-Lens data loading took  0.1323683261871338s
-Convolution time is:  374.858761548996s
+Image loading took  0.5676977634429932s
+Lens data loading took  0.13038945198059082s
+Convolution time is:  387.4894289970398s
 Done!
-Image loading took  0.5622828006744385s
-Lens data loading took  0.13368582725524902s
-Convolution time is:  386.46061396598816s
+Image loading took  0.1132206916809082s
+Lens data loading took  0.128936767578125s
+Convolution time is:  372.17775654792786s
 Done!
-Image loading took  0.5596113204956055s
-Lens data loading took  0.13223052024841309s
-Convolution time is:  382.08249855041504s
+Image loading took  0.1114051342010498s
+Lens data loading took  0.12614893913269043s
+Convolution time is:  371.3742039203644s
 Done!
-Image loading took  0.11367487907409668s
-Lens data loading took  0.09838652610778809s
-Convolution time is:  400.17949509620667s
+Image loading took  0.5597877502441406s
+Lens data loading took  0.12813639640808105s
+Convolution time is:  383.9823889732361s
 Done!
-Image loading took  0.5594398975372314s
-Lens data loading took  0.09911131858825684s
-Convolution time is:  370.7514431476593s
+Image loading took  0.5593187808990479s
+Lens data loading took  0.1258714199066162s
+Convolution time is:  386.51983976364136s
 Done!
-Image loading took  0.11626315116882324s
-Lens data loading took  0.1799023151397705s
-Convolution time is:  382.03210830688477s
+Image loading took  0.5735917091369629s
+Lens data loading took  0.0996100902557373s
+Convolution time is:  373.6956834793091s
 Done!
-Image loading took  0.5654952526092529s
-Lens data loading took  0.1869821548461914s
-Convolution time is:  388.2685842514038s
+Image loading took  0.5590076446533203s
+Lens data loading took  0.09872078895568848s
+Convolution time is:  370.26236367225647s
 Done!
-Image loading took  0.5639021396636963s
-Lens data loading took  0.18615055084228516s
-Convolution time is:  388.94619941711426s
+Image loading took  0.5591263771057129s
+Lens data loading took  0.09820365905761719s
+Convolution time is:  374.0938205718994s
 Done!
-Image loading took  0.5659747123718262s
-Lens data loading took  0.14127779006958008s
-Convolution time is:  377.2309184074402s
+Image loading took  0.13145232200622559s
+Lens data loading took  0.09650325775146484s
+Convolution time is:  387.8841006755829s
 Done!
-Image loading took  0.5626752376556396s
-Lens data loading took  0.13439416885375977s
-Convolution time is:  386.23194766044617s
+Image loading took  0.11777329444885254s
+Lens data loading took  0.09676504135131836s
+Convolution time is:  390.8016471862793s
 Done!
-Image loading took  0.11498641967773438s
-Lens data loading took  0.12567472457885742s
-Convolution time is:  382.31604528427124s
+Image loading took  0.11748552322387695s
+Lens data loading took  0.09670472145080566s
+Convolution time is:  382.64427757263184s
 Done!
-Image loading took  0.561133861541748s
-Lens data loading took  0.15069818496704102s
-Convolution time is:  376.7511377334595s
+Image loading took  0.5774424076080322s
+Lens data loading took  0.17196393013000488s
+Convolution time is:  385.9149160385132s
 Done!
-Image loading took  0.5768837928771973s
-Lens data loading took  0.18692731857299805s
-Convolution time is:  369.7220559120178s
+Image loading took  0.560981273651123s
+Lens data loading took  0.1737668514251709s
+Convolution time is:  390.18193078041077s
 Done!
-Image loading took  0.1141514778137207s
-Lens data loading took  0.17467308044433594s
-Convolution time is:  382.6761546134949s
+Image loading took  0.5612761974334717s
+Lens data loading took  0.17723894119262695s
+Convolution time is:  381.9624981880188s
 Done!
-Image loading took  0.5760185718536377s
-Lens data loading took  0.1919093132019043s
-Convolution time is:  369.1810345649719s
+Image loading took  0.13172030448913574s
+Lens data loading took  0.1702406406402588s
+Convolution time is:  386.38118028640747s
 Done!
-Image loading took  0.575930118560791s
-Lens data loading took  0.14765477180480957s
-Convolution time is:  376.47445154190063s
+Image loading took  0.1169126033782959s
+Lens data loading took  0.17314934730529785s
+Convolution time is:  383.592209815979s
 Done!
-Image loading took  0.5762171745300293s
-Lens data loading took  0.17644286155700684s
-Convolution time is:  384.01345109939575s
-Done!
-Image loading took  0.5601100921630859s
-Lens data loading took  0.14295697212219238s
-Convolution time is:  382.22152614593506s
-Done!
-Image loading took  0.5608162879943848s
-Lens data loading took  0.13781261444091797s
-Convolution time is:  381.1276705265045s
-Done!
-Image loading took  0.11433672904968262s
-Lens data loading took  0.13308405876159668s
-Convolution time is:  380.48927998542786s
-Done!
-Image loading took  0.5604214668273926s
-Lens data loading took  0.13750696182250977s
-Convolution time is:  383.2818138599396s
-Done!
-Image loading took  0.5612900257110596s
-Lens data loading took  0.1604161262512207s
-Convolution time is:  391.3191330432892s
+Image loading took  0.11698246002197266s
+Lens data loading took  0.176896333694458s
+Convolution time is:  384.9368796348572s
 Done!
